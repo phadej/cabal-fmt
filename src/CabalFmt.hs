@@ -64,11 +64,16 @@ main = do
 
     let insertCommentAt :: [BS8.ByteString] -> (Int, FieldPath) -> [String] -> [String]
         insertCommentAt bss (l, fp) xs =
-            ys ++ map f bss ++ zs
+            ys ++ lastEmpty ys ++ map f bss ++ zs
           where
             indent = max 0 (fieldPathSize fp - 1)
             ~(ys, zs) = splitAt (l - 1) xs
             f bs = replicate (indentWith * indent) ' ' ++ C.fromUTF8BS bs
+
+            lastEmpty []       = []
+            lastEmpty [[]]     = []
+            lastEmpty [_]      = [[]]
+            lastEmpty (_ : vs) = lastEmpty vs
 
     let addComment :: (Int, [BS8.ByteString]) -> [String] -> [String]
         addComment (l, bss) = maybe id (insertCommentAt bss) $ do

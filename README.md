@@ -30,6 +30,7 @@ executable cabal-fmt
   default-language: Haskell2010
   hs-source-dirs:   src
   main-is:          CabalFmt.hs
+
   -- build depends will be in nice tabular format
   build-depends:
     , base        >=4.11 && <4.13
@@ -37,6 +38,7 @@ executable cabal-fmt
     , bytestring
     , Cabal       ^>=2.5
     , containers  ^>=0.5.11.0 || ^>=0.6.0.1
+
   -- extensions will be sorted
   other-extensions:
     DeriveFunctor
