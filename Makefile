@@ -1,5 +1,8 @@
 self-test :
-	cabal new-run cabal-fmt -- cabal-fmt.cabal
+	cabal new-run --enable-tests cabal-fmt -- cabal-fmt.cabal
 
 self-test-Cabal :
-	cabal new-run cabal-fmt -- Cabal/Cabal.cabal
+	cabal new-run --enable-tests cabal-fmt -- Cabal/Cabal.cabal
+
+golden :
+	cabal new-run --enable-tests golden
