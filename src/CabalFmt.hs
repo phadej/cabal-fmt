@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns             #-}
+{-# LANGUAGE BangPatterns              #-}
 {-# LANGUAGE DeriveFunctor             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
@@ -11,6 +11,7 @@ module Main where
 
 import Control.Arrow               ((&&&))
 import Control.Monad               (join)
+import Data.Char                   (toLower)
 import Data.Functor.Identity       (Identity (..))
 import Data.List                   (sortOn)
 import Distribution.Compat.Newtype
@@ -22,17 +23,19 @@ import qualified Data.Map.Strict                              as Map
 import qualified Distribution.FieldGrammar                    as C
 import qualified Distribution.FieldGrammar.Parsec             as C
 import qualified Distribution.Fields                          as C
-import qualified Distribution.Fields.Field                          as C
+import qualified Distribution.Fields.Field                    as C
 import qualified Distribution.Fields.Pretty                   as C
 import qualified Distribution.PackageDescription.FieldGrammar as C
 import qualified Distribution.Parsec                          as C
 import qualified Distribution.Parsec.Newtypes                 as C
 import qualified Distribution.Pretty                          as C
-import qualified Distribution.Simple.Utils                    as C (fromUTF8BS, toUTF8BS)
+import qualified Distribution.Simple.Utils                    as C
+                 (fromUTF8BS, toUTF8BS)
 import qualified Distribution.Types.Dependency                as C
+import qualified Distribution.Types.DependencyMap             as C
 import qualified Distribution.Types.PackageName               as C
+import qualified Distribution.Types.VersionInterval           as C
 import qualified Distribution.Types.VersionRange              as C
-import qualified Distribution.Types.VersionInterval              as C
 import qualified Language.Haskell.Extension                   as C
 import qualified Text.PrettyPrint                             as PP
 
@@ -119,7 +122,7 @@ fieldDescrs =
 -- | Assume 2.2 format:
 --
 -- * Use leading-comma
--- * tabular format (but don't try too hard) 
+-- * tabular format (but don't try too hard)
 -- * try to find ^>= opportunities
 --
 buildDependsSP :: SP
@@ -129,7 +132,10 @@ buildDependsSP = SP pretty parse where
 
     pretty :: [C.Dependency] -> PP.Doc
     pretty deps = PP.vcat (map pretty' deps') where
-        deps' = map (C.unPackageName . C.depPkgName &&& C.depVerRange) deps
+        deps' = sortOn (map toLower . fst)
+              $ map (C.unPackageName . C.depPkgName &&& C.depVerRange)
+              $ C.fromDepMap . C.toDepMap -- this combines duplicate packages
+              $ deps
 
         width = maximum (0 : map (length . fst) deps') + 1
 

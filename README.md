@@ -34,10 +34,10 @@ executable cabal-fmt
   -- build depends will be in nice tabular format
   build-depends:
     , base        >=4.11 && <4.13
-    , pretty      ^>=1.1.3.6
     , bytestring
     , Cabal       ^>=2.5
     , containers  ^>=0.5.11.0 || ^>=0.6.0.1
+    , pretty      ^>=1.1.3.6
 
   -- extensions will be sorted
   other-extensions:
