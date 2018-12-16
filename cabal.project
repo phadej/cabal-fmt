@@ -1,0 +1,4 @@
+packages: . Cabal
+
+package cabal-fmt
+  ghc-options: -Wall
