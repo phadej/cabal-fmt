@@ -1,7 +1,6 @@
 module CabalFmt.Parser where
 
-import Control.Monad.Error (throwError)
-import Text.Parsec.Error   (ParseError)
+import Control.Monad.Except (throwError)
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.Fields                          as C
@@ -22,7 +21,7 @@ runParseResult filepath contents pr = case result of
 parseGpd :: FilePath -> BS.ByteString -> CabalFmt C.GenericPackageDescription
 parseGpd filepath contents = runParseResult filepath contents $ C.parseGenericPackageDescription contents
 
-parseFields :: (ParseError -> Error) -> BS.ByteString -> CabalFmt [C.Field C.Position]
-parseFields mkErr contents = case C.readFields contents of
-    Left err -> throwError $ mkErr err
+parseFields :: BS.ByteString -> CabalFmt [C.Field C.Position]
+parseFields contents = case C.readFields contents of
+    Left err -> throwError $ PanicCannotParseInput err
     Right x  -> return x

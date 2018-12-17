@@ -6,8 +6,8 @@
 module CabalFmt where
 
 import Control.Monad        (join)
-import Control.Monad.Reader (asks, local)
 import Control.Monad.Except (catchError)
+import Control.Monad.Reader (asks, local)
 import Data.Maybe           (fromMaybe)
 import System.Environment   (getArgs)
 import System.Exit          (exitFailure)
@@ -16,19 +16,19 @@ import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
 import qualified Distribution.FieldGrammar.Parsec             as C
 import qualified Distribution.Fields                          as C
+import qualified Distribution.Fields.ConfVar                  as C
 import qualified Distribution.Fields.Pretty                   as C
 import qualified Distribution.PackageDescription.FieldGrammar as C
 import qualified Distribution.Parsec                          as C
 import qualified Distribution.Pretty                          as C
+import qualified Distribution.Simple.Utils                    as C
+import qualified Distribution.Types.Condition                 as C
 import qualified Distribution.Types.GenericPackageDescription as C
-import qualified Distribution.Types.Condition as C
 import qualified Distribution.Types.PackageDescription        as C
 import qualified Distribution.Types.Version                   as C
 import qualified Text.PrettyPrint                             as PP
-import qualified Distribution.Fields.ConfVar as C
 
 import CabalFmt.Comments
-import CabalFmt.Error
 import CabalFmt.Fields
 import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
@@ -36,6 +36,7 @@ import CabalFmt.Fields.Modules
 import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
+import CabalFmt.PrettyField
 
 -------------------------------------------------------------------------------
 -- Main
@@ -59,7 +60,8 @@ main'' :: FilePath -> BS.ByteString -> CabalFmt String
 main'' filepath contents = do
     indentWith  <- asks optIndent
     gpd         <- parseGpd filepath contents
-    inputFields <- parseFields PanicCannotParseInput contents
+    inputFields' <- parseFields contents
+    let inputFields = attachComments contents inputFields'
 
     let v = C.cabalSpecFromVersionDigits
           $ C.versionNumbers
@@ -68,12 +70,15 @@ main'' filepath contents = do
 
     local (\opts -> opts { optSpecVersion = v }) $ do
 
-        outputPrettyFields <- C.genericFromParsecFields
+        outputPrettyFields <- genericFromParsecFields
             prettyFieldLines
             prettySectionArgs
             inputFields
 
-        copyComments contents inputFields $ C.showFields' indentWith outputPrettyFields
+        return $ showFields fromComments indentWith outputPrettyFields
+
+fromComments :: Comments -> [String]
+fromComments (Comments bss) = map C.fromUTF8BS bss
 
 -------------------------------------------------------------------------------
 -- Field prettyfying
@@ -105,14 +110,14 @@ fieldDescrs v
 -- Sections
 -------------------------------------------------------------------------------
 
-prettySectionArgs :: C.FieldName -> [C.SectionArg C.Position] -> CabalFmt [PP.Doc]
-prettySectionArgs x args = 
+prettySectionArgs :: C.FieldName -> [C.SectionArg ann] -> CabalFmt [PP.Doc]
+prettySectionArgs x args =
     prettySectionArgs' x args `catchError` \_ ->
         return (C.prettySectionArgs x args)
 
-prettySectionArgs' :: a -> [C.SectionArg C.Position] -> CabalFmt [PP.Doc]
+prettySectionArgs' :: a -> [C.SectionArg ann] -> CabalFmt [PP.Doc]
 prettySectionArgs' _ args = do
-    c <- runParseResult "<args>" "" $ C.parseConditionConfVar args
+    c <- runParseResult "<args>" "" $ C.parseConditionConfVar (map (C.zeroPos <$) args)
     return [ppCondition c]
 
 -------------------------------------------------------------------------------

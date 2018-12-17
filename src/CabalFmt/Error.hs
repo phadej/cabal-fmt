@@ -10,5 +10,4 @@ data Error
     = SomeError String
     | CabalParseError FilePath BS.ByteString [C.PError] (Maybe C.Version) [C.PWarning]
     | PanicCannotParseInput  ParseError
-    | PanicCannotParseOutput ParseError
   deriving (Show)

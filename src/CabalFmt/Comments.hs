@@ -1,74 +1,87 @@
-{-# LANGUAGE BangPatterns      #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns        #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module CabalFmt.Comments where
 
-import Control.Monad.Reader (asks)
+import Data.Foldable (toList)
+import Data.Maybe    (fromMaybe)
 
 import qualified Data.ByteString           as BS
 import qualified Data.ByteString.Char8     as BS8
+import qualified Data.Map.Strict           as Map
 import qualified Distribution.Fields       as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Parsec       as C
-import qualified Distribution.Simple.Utils as C (fromUTF8BS, toUTF8BS)
 
-import CabalFmt.Error
-import CabalFmt.Monad
-import CabalFmt.Options
-import CabalFmt.Parser
+-------------------------------------------------------------------------------
+-- Comments wrapper
+-------------------------------------------------------------------------------
 
-copyComments
+newtype Comments = Comments [BS.ByteString]
+
+instance Semigroup Comments where
+    Comments a <> Comments b = Comments (a <> b)
+
+instance Monoid Comments where
+    mempty = Comments []
+    mappend = (<>)
+
+-------------------------------------------------------------------------------
+-- Attach comments
+-------------------------------------------------------------------------------
+
+attachComments
     :: BS.ByteString        -- ^ source with comments
     -> [C.Field C.Position] -- ^ parsed source fields
-    -> String               -- ^ new source (without comments, but same structure)
-    -> CabalFmt String      -- ^ new source with comments
-copyComments input inputFields output = do
-    outputFields <- parseFields PanicCannotParseOutput (C.toUTF8BS output)
-    indentWith <- asks optIndent
+    -> [C.Field Comments]
+attachComments input inputFields = overAnn attach inputFields where
+    inputFieldsU :: [(FieldPath, C.Field C.Position)]
+    inputFieldsU = fieldUniverseN inputFields
 
-    let comments      = extractComments input
-        inputFieldsU  = fieldUniverseN inputFields
-        outputFieldsU = fieldUniverseN outputFields
+    comments :: [(Int, Comments)]
+    comments = extractComments input
 
-        addComment'   = addComment indentWith inputFieldsU outputFieldsU
+    -- todo: warning when comments are omitted
+    comments' :: Map.Map FieldPath Comments
+    comments' = Map.fromListWith (flip (<>))
+        [ (path, cs)
+        | (l, cs) <- comments
+        , path <- toList (findPath C.fieldAnn l inputFieldsU)
+        ]
 
-        outputLines, outputLines' :: [String]
-        outputLines  = lines output
-        outputLines' = foldr addComment' outputLines comments
+    attach :: FieldPath -> C.Position -> Comments
+    attach fp _pos = fromMaybe mempty (Map.lookup fp comments')
 
-    return $ unlines outputLines'
-  where
-    insertCommentAt :: Int -> [BS8.ByteString] -> (Int, FieldPath) -> [String] -> [String]
-    insertCommentAt indentWith bss (l, fp) xs =
-        ys ++ lastEmpty ys ++ map f bss ++ zs
+overAnn :: forall a b. (FieldPath -> a -> b) -> [C.Field a] -> [C.Field b]
+overAnn f = go' id where
+    go :: (FieldPath -> FieldPath) -> Int -> C.Field a -> C.Field b
+    go g i (C.Field (C.Name a name) fls) =
+        C.Field (C.Name b name) (b <$$ fls)
       where
-        indent = max 0 (fieldPathSize fp - 1)
-        ~(ys, zs) = splitAt (l - 1) xs
-        f bs = replicate (indentWith * indent) ' ' ++ C.fromUTF8BS bs
+        b = f (g (Nth i End)) a
 
-        lastEmpty []       = []
-        lastEmpty [[]]     = []
-        lastEmpty [_]      = [[]]
-        lastEmpty (_ : vs) = lastEmpty vs
+    go g i (C.Section (C.Name a name) args fls) =
+        C.Section (C.Name b name) (b <$$ args) (go' (g . Nth i) fls)
+      where
+        b = f (g (Nth i End)) a
 
-    addComment
-        :: Int
-        -> [(FieldPath, C.Field C.Position)]
-        -> [(FieldPath, C.Field C.Position)]
-        -> (Int, [BS8.ByteString]) -> [String] -> [String]
-    addComment indentWith inputFieldsU outputFieldsU (l, bss) =
-        maybe id (insertCommentAt indentWith bss) $ do
-            ipath  <- findPath C.fieldAnn l inputFieldsU
-            ofield <- lookup ipath outputFieldsU
-            let C.Position l' _ = C.fieldAnn ofield
-            return (l', ipath)
+    go' :: (FieldPath -> FieldPath) -> [C.Field a] -> [C.Field b]
+    go' g xs = zipWith (go g) [0..] xs
 
-extractComments :: BS.ByteString -> [(Int, [BS.ByteString])]
+    (<$$) :: (Functor f, Functor g) => x -> f (g y) -> f (g x)
+    x <$$ y = (x <$) <$> y
+
+-------------------------------------------------------------------------------
+-- Find comments in the input
+-------------------------------------------------------------------------------
+
+extractComments :: BS.ByteString -> [(Int, Comments)]
 extractComments = go . zip [1..] . map (BS.dropWhile isSpace8) . BS8.lines where
-    go :: [(Int, BS.ByteString)] -> [(Int, [BS.ByteString])]
+    go :: [(Int, BS.ByteString)] -> [(Int, Comments)]
     go [] = []
     go ((n, bs) : rest)
         | isComment bs = case span ((isComment .|| BS.null) . snd) rest of
-            (h,t) -> (n, bs : map snd h) : go t
+            (h,t) -> (n, Comments $ bs : map snd h) : go t
         | otherwise = go rest
 
     (f .|| g) x = f x || g x
@@ -78,11 +91,15 @@ extractComments = go . zip [1..] . map (BS.dropWhile isSpace8) . BS8.lines where
     isComment :: BS.ByteString -> Bool
     isComment = BS.isPrefixOf "--"
 
+-------------------------------------------------------------------------------
+-- FieldPath
+-------------------------------------------------------------------------------
+
 -- | Paths input paths. Essentially a list of offsets. Own type ofr safety.
 data FieldPath
     = End
     | Nth Int FieldPath -- nth field
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 fieldPathSize :: FieldPath -> Int
 fieldPathSize = go 0 where
