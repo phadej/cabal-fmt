@@ -231,13 +231,13 @@ library
     , process     >=1.1.0.2 && <1.7
     , time        >=1.4.0.1 && <1.10
 
-  if flag ( bundled-binary-generic )
+  if flag(bundled-binary-generic)
     build-depends: binary >=0.5.1.1 && <0.7
 
   else
     build-depends: binary >=0.7 && <0.9
 
-  if os ( windows )
+  if os(windows)
     build-depends: Win32 >=2.3.0.0 && <2.9
 
   else
@@ -245,7 +245,7 @@ library
 
   ghc-options:      -Wall -fno-ignore-asserts -fwarn-tabs
 
-  if impl ( ghc >= 8.0 )
+  if impl(ghc >=8.0)
     ghc-options:
       -Wcompat -Wnoncanonical-monad-instances
       -Wnoncanonical-monadfail-instances
@@ -492,7 +492,7 @@ library
     Distribution.Utils.UnionFind
     Paths_Cabal
 
-  if flag ( bundled-binary-generic )
+  if flag(bundled-binary-generic)
     other-modules:
       Distribution.Compat.Binary.Class
       Distribution.Compat.Binary.Generic
@@ -525,7 +525,7 @@ library
     TypeSynonymInstances
     UndecidableInstances
 
-  if impl ( ghc >= 7.11 )
+  if impl(ghc >=7.11)
     other-extensions: PatternSynonyms
 
 -- Small, fast running tests.
@@ -588,7 +588,7 @@ test-suite parser-tests
   ghc-options:      -Wall
   default-language: Haskell2010
 
-  if impl ( ghc >= 7.8 )
+  if impl(ghc >=7.8)
     build-depends: tree-diff >=0.0.1 && <0.1
     other-modules:
       Instances.TreeDiff
@@ -632,7 +632,7 @@ test-suite hackage-tests
   main-is:            HackageTests.hs
 
   -- TODO: need to get 01-index.tar on appveyor
-  if os ( windows )
+  if os(windows)
     buildable: False
 
   hs-source-dirs:     tests
@@ -651,7 +651,7 @@ test-suite hackage-tests
     , stm                   >=2.4.5.0 && <2.6
     , tar                   >=0.5.0.3 && <0.6
 
-  if impl ( ghc >= 7.8 )
+  if impl(ghc >=7.8)
     build-depends: tree-diff >=0.0.1 && <0.1
     other-modules:
       Instances.TreeDiff

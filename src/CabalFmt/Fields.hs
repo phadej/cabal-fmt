@@ -12,7 +12,7 @@ import Distribution.Compat.Newtype
 
 import qualified Data.Map.Strict           as Map
 import qualified Distribution.FieldGrammar as C
-import qualified Distribution.Fields       as C
+import qualified Distribution.Fields.Field as C
 import qualified Distribution.Parsec       as C
 import qualified Distribution.Pretty       as C
 import qualified Text.PrettyPrint          as PP
