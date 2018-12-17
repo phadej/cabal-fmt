@@ -70,6 +70,8 @@ buildDependsF v = singletonF "build-depends" pretty parse where
         -- indent first
         prettyVi (C.LowerBound l lb, C.NoUpperBound) =
             prettyLowerBound lb PP.<> C.pretty l
+        prettyVi (C.LowerBound l C.InclusiveBound, C.UpperBound u C.InclusiveBound)
+            | l == u = PP.text "==" PP.<> C.pretty l
         prettyVi (C.LowerBound l lb, C.UpperBound u ub) =
             prettyLowerBound lb PP.<> PP.text (leftpad width' l')
             PP.<+> PP.text "&&" PP.<+>
@@ -79,6 +81,8 @@ buildDependsF v = singletonF "build-depends" pretty parse where
 
         prettyVi' (C.LowerBound l lb, C.NoUpperBound) =
             prettyLowerBound lb PP.<> C.pretty l
+        prettyVi' (C.LowerBound l C.InclusiveBound, C.UpperBound u C.InclusiveBound)
+            | l == u = PP.text "==" PP.<> C.pretty l
         prettyVi' (C.LowerBound l lb, C.UpperBound u ub) =
             prettyLowerBound lb PP.<> C.pretty l PP.<+> PP.text "&&" PP.<+>
             prettyUpperBound ub PP.<> C.pretty u
