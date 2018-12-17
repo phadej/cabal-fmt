@@ -93,7 +93,7 @@ knownField fn fls = do
 
 fieldDescrs :: C.CabalSpecVersion -> FieldDescrs () ()
 fieldDescrs v
-    = buildDependsF v
+    =  buildDependsF v
     <> defaultExtensionsF
     <> otherExtensionsF
     <> exposedModulesF

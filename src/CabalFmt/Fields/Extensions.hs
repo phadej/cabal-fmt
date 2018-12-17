@@ -19,7 +19,7 @@ otherExtensionsF :: FieldDescrs () ()
 otherExtensionsF = singletonF "other-extensions" pretty parse
 
 defaultExtensionsF :: FieldDescrs () ()
-defaultExtensionsF = singletonF "other-extensions" pretty parse
+defaultExtensionsF = singletonF "default-extensions" pretty parse
 
 parse :: C.CabalParsing m => m [C.Extension]
 parse = unpack' (C.alaList' C.FSep C.MQuoted) <$> C.parsec
