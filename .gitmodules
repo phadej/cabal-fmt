@@ -1,0 +1,3 @@
+[submodule "cabal"]
+	path = cabal
+	url = git@github.com:haskell/cabal.git
