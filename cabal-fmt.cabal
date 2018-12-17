@@ -7,6 +7,7 @@ description:
   Format @.cabal@ files preserving the original ordering and comments.
   .
   Tuned for Oleg's preference, but has some knobs still.
+
 license:       GPL-3.0-or-later
 license-file:  LICENSE
 author:        Oleg Grenrus <oleg.grenrus@iki.fi>
@@ -17,7 +18,7 @@ source-repository head
   type:     git
   location: https://github.com/phadej/cabal-fmt.git
 
-library cabal-fmt-lib
+library
   default-language: Haskell2010
   hs-source-dirs:   src
   build-depends:
@@ -28,6 +29,7 @@ library cabal-fmt-lib
     , mtl         ^>=2.2.2
     , parsec      ^>=3.1.13.0
     , pretty      ^>=1.1.3.6
+
   exposed-modules:
     CabalFmt
     CabalFmt.Comments
@@ -40,6 +42,7 @@ library cabal-fmt-lib
     CabalFmt.Options
     CabalFmt.Parser
     CabalFmt.PrettyField
+
   other-extensions:
     DeriveFunctor
     ExistentialQuantification
@@ -51,9 +54,15 @@ executable cabal-fmt
   default-language: Haskell2010
   hs-source-dirs:   cli
   main-is:          Main.hs
+
+  -- dependencis in library
   build-depends:
     , base
-    , cabal-fmt-lib
+    , bytestring
+    , cabal-fmt
+
+  -- extra dependencies
+  build-depends:    optparse-applicative ^>=0.14.3.0
 
 test-suite golden
   type:             exitcode-stdio-1.0
@@ -66,7 +75,7 @@ test-suite golden
     , base
     , bytestring
     , Cabal
-    , cabal-fmt-lib
+    , cabal-fmt
 
   -- test dependencies
   build-depends:

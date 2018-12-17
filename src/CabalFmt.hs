@@ -3,14 +3,12 @@
 -- | This is a demo application of how you can make Cabal-like
 -- file formatter.
 --
-module CabalFmt where
+module CabalFmt (cabalFmt) where
 
 import Control.Monad        (join)
 import Control.Monad.Except (catchError)
 import Control.Monad.Reader (asks, local)
 import Data.Maybe           (fromMaybe)
-import System.Environment   (getArgs)
-import System.Exit          (exitFailure)
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
@@ -42,22 +40,8 @@ import CabalFmt.PrettyField
 -- Main
 -------------------------------------------------------------------------------
 
-main :: IO ()
-main = do
-    args <- getArgs
-    case args of
-        []           -> BS.getContents       >>= main' "<stdin>"
-        (filepath:_) -> BS.readFile filepath >>= main' filepath
-
-main' :: FilePath -> BS.ByteString -> IO ()
-main' filepath input = case runCabalFmt defaultOptions (main'' filepath input) of
-    Right output -> putStr output
-    Left err     -> do
-        print err
-        exitFailure
-
-main'' :: FilePath -> BS.ByteString -> CabalFmt String
-main'' filepath contents = do
+cabalFmt :: FilePath -> BS.ByteString -> CabalFmt String
+cabalFmt filepath contents = do
     indentWith  <- asks optIndent
     gpd         <- parseGpd filepath contents
     inputFields' <- parseFields contents

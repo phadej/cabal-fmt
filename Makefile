@@ -6,3 +6,6 @@ self-test-Cabal :
 
 golden :
 	cabal new-run --enable-tests golden
+
+golden-accept : 
+	cabal new-run --enable-tests golden -- --accept

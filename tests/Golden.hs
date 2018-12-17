@@ -8,7 +8,7 @@ import Test.Tasty.Golden.Advanced (goldenTest)
 
 import qualified Data.ByteString as BS
 
-import CabalFmt         (main'')
+import CabalFmt         (cabalFmt)
 import CabalFmt.Monad   (runCabalFmt)
 import CabalFmt.Options (defaultOptions)
 
@@ -29,7 +29,7 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
 
     makeTest = do
         contents <- BS.readFile inputPath
-        case runCabalFmt defaultOptions $ main'' inputPath contents of
+        case runCabalFmt defaultOptions $ cabalFmt inputPath contents of
             Right output' -> return (toUTF8BS output')
             Left err      -> fail (show err)
 
