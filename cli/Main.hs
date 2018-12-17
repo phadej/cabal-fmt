@@ -10,6 +10,7 @@ import qualified Options.Applicative as O
 import CabalFmt         (cabalFmt)
 import CabalFmt.Monad   (runCabalFmt)
 import CabalFmt.Options
+import CabalFmt.Error (renderError)
 
 main :: IO ()
 main = do
@@ -32,7 +33,7 @@ main' inplace opts filepath input =
             | inplace   -> writeFile filepath output
             | otherwise -> putStr output
         Left err     -> do
-            print err
+            renderError err
             exitFailure
 
 -------------------------------------------------------------------------------
