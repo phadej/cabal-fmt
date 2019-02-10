@@ -39,6 +39,7 @@ library
     CabalFmt.Fields.BuildDepends
     CabalFmt.Fields.Extensions
     CabalFmt.Fields.Modules
+    CabalFmt.Fields.TestedWith
     CabalFmt.Monad
     CabalFmt.Options
     CabalFmt.Parser
