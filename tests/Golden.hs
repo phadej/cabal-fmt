@@ -16,6 +16,7 @@ main :: IO ()
 main = defaultMain $ testGroup "tests"
     [ goldenTest' "cabal-fmt"
     , goldenTest' "Cabal"
+    , goldenTest' "simple-example"
     ]
 
 goldenTest' :: String -> TestTree

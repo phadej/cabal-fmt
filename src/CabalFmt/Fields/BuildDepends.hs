@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CabalFmt.Fields.BuildDepends (
     buildDependsF,
+    setupDependsF,
     ) where
 
 import Control.Arrow               ((&&&))
@@ -22,22 +23,26 @@ import qualified Text.PrettyPrint                   as PP
 
 import CabalFmt.Fields
 
-buildDependsF :: C.CabalSpecVersion -> FieldDescrs () ()
-buildDependsF v = singletonF "build-depends" pretty parse where
-    parse :: C.CabalParsing m => m [C.Dependency]
-    parse = unpack' (C.alaList C.CommaVCat) <$> C.parsec
+setupDependsF :: C.CabalSpecVersion -> FieldDescrs () ()
+setupDependsF v = singletonF "setup-depends" (pretty v) parse
 
-    pretty :: [C.Dependency] -> PP.Doc
-    pretty [] = PP.empty
-    pretty [dep] =
-        C.pretty (C.depPkgName dep) PP.<+>
-        prettyVR vr'
+buildDependsF :: C.CabalSpecVersion -> FieldDescrs () ()
+buildDependsF v = singletonF "build-depends" (pretty v) parse
+
+parse :: C.CabalParsing m => m [C.Dependency]
+parse = unpack' (C.alaList C.CommaVCat) <$> C.parsec
+
+pretty :: C.CabalSpecVersion -> [C.Dependency] -> PP.Doc
+pretty v deps = case deps of
+    [] -> PP.empty
+    [dep] -> C.pretty (C.depPkgName dep) PP.<+> prettyVR vr'
       where
         vr' = either (C.fromVersionIntervals . C.mkVersionIntervals) id
             $ norm (C.asVersionIntervals $ C.depVerRange dep)
         prettyVR vr | vr == C.anyVersion = PP.empty
                     | otherwise          = C.pretty vr
-    pretty deps = PP.vcat (zipWith pretty' (True : repeat False) deps') where
+    _ -> PP.vcat (zipWith pretty' (True : repeat False) deps')
+      where
         deps' = sortOn (map toLower . fst)
               $ map (C.unPackageName . C.depPkgName &&& C.asVersionIntervals . C.depVerRange)
               $ C.fromDepMap . C.toDepMap -- this combines duplicate packages
@@ -94,7 +99,7 @@ buildDependsF v = singletonF "build-depends" pretty parse where
         prettyUpperBound :: C.Bound -> PP.Doc
         prettyUpperBound C.InclusiveBound = PP.text "<="
         prettyUpperBound C.ExclusiveBound = PP.text "<"
-
+  where
     empty :: [C.VersionInterval] -> Bool
     empty []                                                  = True
     empty [(C.LowerBound l C.InclusiveBound, C.NoUpperBound)] = l == C.mkVersion [0]

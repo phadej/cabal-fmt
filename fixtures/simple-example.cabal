@@ -1,0 +1,51 @@
+name:                simple-example
+version:             1
+synopsis:            Simple example of cabal-doctest demonstrating a library
+                     with doctests
+description:         A package skeleton, to demostrate the use of cabal-doctest
+homepage:            https://github.com/phadej/cabal-doctest
+license:             BSD3
+license-file:        LICENSE
+author:              Oleg Grenrus <oleg.grenrus@iki.fi>
+maintainer:          Oleg Grenrus <oleg.grenrus@iki.fi>
+copyright:           (c) 2017 Oleg Grenrus
+category:            Example
+build-type:          Custom
+cabal-version:       1.12
+
+tested-with:
+  GHC==7.0.4,
+  GHC==7.2.2,
+  GHC==7.4.2,
+  GHC==7.6.3,
+  GHC==7.8.4,
+  GHC==7.10.3,
+  GHC==8.0.2,
+  GHC==8.2.2,
+  GHC==8.4.4,
+  GHC==8.6.3
+
+custom-setup
+  setup-depends:
+    base, Cabal, cabal-doctest >=1.0.6 && <1.1
+
+library
+  exposed-modules:     Example
+  default-extensions:  ScopedTypeVariables RankNTypes
+  build-depends:       base >=4.3 && <4.13
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+
+test-suite doctests
+  type:                exitcode-stdio-1.0
+  main-is:             doctests.hs
+  build-depends:
+    base,
+    doctest >= 0.15 && <0.17,
+    QuickCheck ==2.12.*,
+    simple-example,
+    template-haskell
+
+  ghc-options:         -Wall -threaded
+  hs-source-dirs:      tests
+  default-language:    Haskell2010

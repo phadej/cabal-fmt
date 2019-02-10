@@ -31,6 +31,7 @@ import CabalFmt.Fields
 import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
 import CabalFmt.Fields.Modules
+import CabalFmt.Fields.TestedWith
 import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
@@ -83,10 +84,12 @@ knownField fn fls = do
 fieldDescrs :: C.CabalSpecVersion -> FieldDescrs () ()
 fieldDescrs v
     =  buildDependsF v
+    <> setupDependsF v
     <> defaultExtensionsF
     <> otherExtensionsF
     <> exposedModulesF
     <> otherModulesF
+    <> testedWithF
     <> coerceFieldDescrs C.packageDescriptionFieldGrammar
     <> coerceFieldDescrs C.buildInfoFieldGrammar
 
