@@ -35,7 +35,6 @@ import CabalFmt.Fields.TestedWith
 import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
-import CabalFmt.PrettyField
 
 -------------------------------------------------------------------------------
 -- Main
@@ -55,12 +54,12 @@ cabalFmt filepath contents = do
 
     local (\opts -> opts { optSpecVersion = v }) $ do
 
-        outputPrettyFields <- genericFromParsecFields
+        outputPrettyFields <- C.genericFromParsecFields
             prettyFieldLines
             prettySectionArgs
             inputFields
 
-        return $ showFields fromComments indentWith outputPrettyFields
+        return $ C.showFields' fromComments indentWith outputPrettyFields
 
 fromComments :: Comments -> [String]
 fromComments (Comments bss) = map C.fromUTF8BS bss

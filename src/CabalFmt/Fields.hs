@@ -15,6 +15,7 @@ import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Parsec       as C
 import qualified Distribution.Pretty       as C
+import qualified Distribution.Compat.CharParsing as C
 import qualified Text.PrettyPrint          as PP
 
 -------------------------------------------------------------------------------
@@ -82,6 +83,14 @@ instance C.FieldGrammar FieldDescrs where
 
     monoidalFieldAla fn _pack _ =
         singletonF fn (C.pretty . pack' _pack) (unpack' _pack <$> C.parsec)
+
+    freeTextField fn _ = singletonF fn
+        PP.text
+        (C.munch $ const True)
+
+    freeTextFieldDef fn _ = singletonF fn
+        PP.text
+        (C.munch $ const True)
 
     prefixedFields _fnPfx _l = F mempty
     knownField _           = pure ()

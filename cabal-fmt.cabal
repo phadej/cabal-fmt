@@ -12,7 +12,7 @@ license:       GPL-3.0-or-later
 license-file:  LICENSE
 author:        Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:    Oleg Grenrus <oleg.grenrus@iki.fi>
-tested-with:   ghc ==8.4.4 || ==8.6.3
+tested-with:   ghc ==8.4.4 || ==8.6.4
 
 source-repository head
   type:     git
@@ -24,7 +24,7 @@ library
   build-depends:
     , base        ^>=4.11.1.0 || ^>=4.12.0.0
     , bytestring  ^>=0.10.8.2
-    , Cabal       ^>=2.5
+    , Cabal       ^>=3.0.0.0
     , containers  ^>=0.5.11.0 || ^>=0.6.0.1
     , filepath    ^>=1.4.2
     , mtl         ^>=2.2.2
@@ -43,7 +43,6 @@ library
     CabalFmt.Monad
     CabalFmt.Options
     CabalFmt.Parser
-    CabalFmt.PrettyField
 
   other-extensions:
     DeriveFunctor
@@ -57,7 +56,7 @@ executable cabal-fmt
   hs-source-dirs:   cli
   main-is:          Main.hs
 
-  -- dependencis in library
+  -- dependencims in library
   build-depends:
     , base
     , bytestring
