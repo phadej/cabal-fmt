@@ -54,11 +54,11 @@ renderParseError filepath contents errors warnings = unlines $
         ('-':'-':_) -> True   -- comment
         _           -> False
 
-    renderedErrors   = concatMap renderError errors
+    renderedErrors   = concatMap renderError' errors
     renderedWarnings = concatMap renderWarning warnings
 
-    renderError :: C.PError -> [String]
-    renderError (C.PError pos@(C.Position row col) msg)
+    renderError' :: C.PError -> [String]
+    renderError' (C.PError pos@(C.Position row col) msg)
         -- if position is 0:0, then it doesn't make sense to show input
         -- looks like, Parsec errors have line-feed in them
         | pos == C.zeroPos = msgs
