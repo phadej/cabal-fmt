@@ -12,7 +12,7 @@ license:       GPL-3.0-or-later
 license-file:  LICENSE
 author:        Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:    Oleg Grenrus <oleg.grenrus@iki.fi>
-tested-with:   ghc ==8.4.4 || ==8.6.4
+tested-with:   GHC ==8.4.4 || ==8.6.5
 
 source-repository head
   type:     git

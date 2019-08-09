@@ -29,5 +29,6 @@ testedWithF = singletonF "tested-with" pretty parse where
         tw1 :: Map.Map C.CompilerFlavor C.VersionRange
         tw1 = Map.fromListWith C.unionVersionRanges tw0
 
-        prettyC C.GHC = PP.text "GHC"
-        prettyC c     = C.pretty c
+        prettyC C.GHC   = PP.text "GHC"
+        prettyC C.GHCJS = PP.text "GHCJS"
+        prettyC c       = C.pretty c
