@@ -1,18 +1,21 @@
-cabal-version: 2.2
-name:          cabal-fmt
-version:       0.1
-synopsis:      Format .cabal files
-category:      Development
+cabal-version:      2.2
+name:               cabal-fmt
+version:            0.1
+synopsis:           Format .cabal files
+category:           Development
 description:
   Format @.cabal@ files preserving the original ordering and comments.
   .
   Tuned for Oleg's preference, but has some knobs still.
 
-license:       GPL-3.0-or-later
-license-file:  LICENSE
-author:        Oleg Grenrus <oleg.grenrus@iki.fi>
-maintainer:    Oleg Grenrus <oleg.grenrus@iki.fi>
-tested-with:   GHC ==8.4.4 || ==8.6.5
+license:            GPL-3.0-or-later
+license-file:       LICENSE
+author:             Oleg Grenrus <oleg.grenrus@iki.fi>
+maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
+tested-with:        GHC ==8.4.4 || ==8.6.5
+extra-source-files:
+  fixtures/*.cabal
+  fixtures/*.format
 
 source-repository head
   type:     git
@@ -63,7 +66,7 @@ executable cabal-fmt
     , cabal-fmt-internal
 
   -- extra dependencies
-  build-depends:    optparse-applicative ^>=0.14.3.0 || ^>=0.15
+  build-depends:    optparse-applicative >=0.14.3.0 && <0.16
 
 test-suite golden
   type:             exitcode-stdio-1.0
