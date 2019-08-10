@@ -1,4 +1,5 @@
 packages: .
+tests: true
 
 package cabal-fmt
   ghc-options: -Wall

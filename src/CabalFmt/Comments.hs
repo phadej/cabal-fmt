@@ -1,6 +1,8 @@
-{-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DerivingStrategies         #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
 module CabalFmt.Comments where
 
 import Data.Foldable (toList)
@@ -18,13 +20,8 @@ import qualified Distribution.Parsec       as C
 -------------------------------------------------------------------------------
 
 newtype Comments = Comments [BS.ByteString]
-
-instance Semigroup Comments where
-    Comments a <> Comments b = Comments (a <> b)
-
-instance Monoid Comments where
-    mempty = Comments []
-    mappend = (<>)
+  deriving stock Show
+  deriving newtype (Semigroup, Monoid)
 
 -------------------------------------------------------------------------------
 -- Attach comments

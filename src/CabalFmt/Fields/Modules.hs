@@ -4,8 +4,8 @@ module CabalFmt.Fields.Modules (
     exposedModulesF,
     ) where
 
-import Data.List                   (sortBy)
-import Data.Function (on)
+import Data.Function               (on)
+import Data.List                   (nub, sortBy)
 import Distribution.Compat.Newtype
 
 import qualified Distribution.ModuleName      as C
@@ -26,7 +26,7 @@ parse :: C.CabalParsing m => m [C.ModuleName]
 parse = unpack' (C.alaList' C.VCat C.MQuoted) <$> C.parsec
 
 pretty :: [C.ModuleName] -> PP.Doc
-pretty = PP.vcat . map C.pretty . sortBy (cmp `on` C.prettyShow)
+pretty = PP.vcat . map C.pretty . nub . sortBy (cmp `on` C.prettyShow)
   where
     cmp a b = case dropCommonPrefix a b of
         ([], [])  -> EQ

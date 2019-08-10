@@ -1,11 +1,11 @@
-self-test :
-	cabal new-run --enable-tests cabal-fmt -- cabal-fmt.cabal
+build :
+	cabal v2-build
 
-self-test-Cabal :
-	cabal new-run --enable-tests cabal-fmt -- Cabal/Cabal.cabal
+self-test :
+	cabal v2-run cabal-fmt -- cabal-fmt.cabal
 
 golden :
-	cabal new-run --enable-tests golden
+	cabal v2-run golden
 
 golden-accept : 
-	cabal new-run --enable-tests golden -- --accept
+	cabal v2-run golden -- --accept

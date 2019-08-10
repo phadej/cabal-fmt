@@ -32,6 +32,7 @@ import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
 import CabalFmt.Fields.Modules
 import CabalFmt.Fields.TestedWith
+import CabalFmt.Refactoring
 import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
@@ -42,17 +43,18 @@ import CabalFmt.Parser
 
 cabalFmt :: FilePath -> BS.ByteString -> CabalFmt String
 cabalFmt filepath contents = do
-    indentWith  <- asks optIndent
-    gpd         <- parseGpd filepath contents
+    opts         <- asks id
+    indentWith   <- asks optIndent
+    gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
-    let inputFields = attachComments contents inputFields'
+    let inputFields = foldr (\r f -> r opts f) (attachComments contents inputFields') refactorings 
 
     let v = C.cabalSpecFromVersionDigits
           $ C.versionNumbers
           $ C.specVersion
           $ C.packageDescription gpd
 
-    local (\opts -> opts { optSpecVersion = v }) $ do
+    local (\o -> o { optSpecVersion = v }) $ do
 
         outputPrettyFields <- C.genericFromParsecFields
             prettyFieldLines
@@ -63,6 +65,15 @@ cabalFmt filepath contents = do
 
 fromComments :: Comments -> [String]
 fromComments (Comments bss) = map C.fromUTF8BS bss
+
+-------------------------------------------------------------------------------
+-- Refactorings
+-------------------------------------------------------------------------------
+
+refactorings :: [Refactoring]
+refactorings =
+    [ refactoringExpandExposedModules
+    ]
 
 -------------------------------------------------------------------------------
 -- Field prettyfying
