@@ -1,3 +1,6 @@
+-- |
+-- License: GPL-3.0-or-later
+-- Copyright: Oleg Grenrus
 {-# LANGUAGE DeriveFunctor             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE RankNTypes                #-}

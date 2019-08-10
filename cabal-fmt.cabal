@@ -4,11 +4,11 @@ version:            0.1
 synopsis:           Format .cabal files
 category:           Development
 description:
-  Format @.cabal@ files preserving the original ordering and comments.
+  Format @.cabal@ files preserving the original field ordering, and comments.
   .
   Tuned for Oleg's preference, but has some knobs still.
 
-license:            GPL-3.0-or-later
+license:            GPL-3.0-or-later AND BSD-3-Clause
 license-file:       LICENSE
 author:             Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>

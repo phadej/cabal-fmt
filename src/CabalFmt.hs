@@ -1,6 +1,10 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
--- | This is a demo application of how you can make Cabal-like
+-- |
+-- License: GPL-3.0-or-later
+-- Copyright: Oleg Grenrus
+--
+-- This is a demo application of how you can make Cabal-like
 -- file formatter.
 --
 module CabalFmt (cabalFmt) where

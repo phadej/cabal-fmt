@@ -1,3 +1,6 @@
+-- |
+-- License: BSD-3-Clause
+-- Copyright: Oleg Grenrus
 module Main (main) where
 
 import Control.Applicative (many, (<**>))

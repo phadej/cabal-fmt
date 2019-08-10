@@ -1,3 +1,6 @@
+-- |
+-- License: GPL-3.0-or-later
+-- Copyright: Oleg Grenrus
 module CabalFmt.Parser where
 
 import Control.Monad.Except (throwError)

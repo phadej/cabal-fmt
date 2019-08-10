@@ -1,3 +1,6 @@
+-- |
+-- License: GPL-3.0-or-later
+-- Copyright: Oleg Grenrus
 {-# LANGUAGE DerivingStrategies, GeneralizedNewtypeDeriving #-}
 module CabalFmt.Monad (
     CabalFmt,
