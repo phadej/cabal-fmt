@@ -23,6 +23,7 @@ import Control.Monad.Except   (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.Reader   (MonadReader, ReaderT (..), runReaderT)
 import System.FilePath        ((</>))
+import System.IO              (hPutStrLn, stderr)
 
 import qualified System.Directory as D
 
@@ -42,6 +43,7 @@ import CabalFmt.Options
 class (MonadReader Options m, MonadError Error m) => MonadCabalFmt m where
     listDirectory      :: FilePath -> m [FilePath]
     doesDirectoryExist :: FilePath -> m Bool
+    displayWarning     :: String -> m ()
 
 -------------------------------------------------------------------------------
 -- Pure
@@ -57,6 +59,7 @@ newtype CabalFmt a = CabalFmt { unCabalFmt :: ReaderT Options (Either Error) a }
 instance MonadCabalFmt CabalFmt where
     listDirectory _      = return []
     doesDirectoryExist _ = return False
+    displayWarning _     = return ()
 
 runCabalFmt :: Options -> CabalFmt a -> Either Error a
 runCabalFmt opts m = runReaderT (unCabalFmt m) opts
@@ -78,6 +81,7 @@ instance MonadError Error CabalFmtIO where
 instance MonadCabalFmt CabalFmtIO where
     listDirectory      = liftIO . D.listDirectory
     doesDirectoryExist = liftIO . D.doesDirectoryExist
+    displayWarning w   = liftIO $ hPutStrLn stderr $ "WARNING: " ++ w
 
 runCabalFmtIO :: Options -> CabalFmtIO a -> IO (Either Error a)
 runCabalFmtIO opts m = try $ runReaderT (unCabalFmtIO m) opts

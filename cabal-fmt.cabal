@@ -55,6 +55,7 @@ library cabal-fmt-internal
     CabalFmt.Monad
     CabalFmt.Options
     CabalFmt.Parser
+    CabalFmt.Pragma
     CabalFmt.Refactoring
 
   other-extensions:
@@ -102,5 +103,5 @@ test-suite golden
     , tasty
     , tasty-golden
 
--- cabal-fmt: indent=2
+-- cabal-fmt: indent 4
 -- end file comment

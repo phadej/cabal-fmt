@@ -13,15 +13,13 @@ import Data.List       (intercalate)
 import Data.Maybe      (catMaybes)
 import System.FilePath (dropExtension, splitDirectories)
 
-import qualified Distribution.Compat.CharParsing     as C
-import qualified Distribution.Fields                 as C
-import qualified Distribution.ModuleName             as C
-import qualified Distribution.Parsec                 as C
-import qualified Distribution.Parsec.FieldLineStream as C
-import qualified Distribution.Simple.Utils           as C
+import qualified Distribution.Fields       as C
+import qualified Distribution.ModuleName   as C
+import qualified Distribution.Simple.Utils as C
 
 import CabalFmt.Comments
 import CabalFmt.Monad
+import CabalFmt.Pragma
 
 -------------------------------------------------------------------------------
 -- Refactoring type
@@ -59,23 +57,11 @@ refactoringExpandExposedModules = traverseFields refact where
         | otherwise = pure (name, fls)
 
     parse :: Comments -> [(FilePath, [C.ModuleName])]
-    parse (Comments bss) = catMaybes
-        [ either (const Nothing) Just
-        $ C.runParsecParser parser "<input>" $ C.fieldLineStreamFromBS bs
-        | bs <- bss
-        ]
-
-    parser :: C.ParsecParser (FilePath, [C.ModuleName])
-    parser = do
-        _ <- C.string "--"
-        C.spaces
-        _ <- C.string "cabal-fmt:"
-        C.spaces
-        _ <- C.string "expand"
-        C.spaces
-        dir <- C.parsecToken
-        mns <- C.many (C.space *> C.spaces *> C.parsec)
-        return (dir, mns)
+    parse c = case parsePragmas c of
+        (_, pragmas) ->
+            [ (fp, mns)
+            | PragmaExpandModules fp mns <- pragmas
+            ]
 
 -------------------------------------------------------------------------------
 -- Tools

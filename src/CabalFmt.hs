@@ -12,6 +12,7 @@ module CabalFmt (cabalFmt) where
 import Control.Monad        (foldM, join)
 import Control.Monad.Except (catchError)
 import Control.Monad.Reader (asks, local)
+import Data.Foldable        (traverse_)
 import Data.Function        ((&))
 import Data.Maybe           (fromMaybe)
 
@@ -40,6 +41,7 @@ import CabalFmt.Fields.TestedWith
 import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
+import CabalFmt.Pragma
 import CabalFmt.Refactoring
 
 -------------------------------------------------------------------------------
@@ -51,13 +53,14 @@ cabalFmt filepath contents = do
     gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
     let (inputFieldsC, endComments) = attachComments contents inputFields'
+    let (ws, pragmas) = foldMap (foldMap parsePragmas) inputFieldsC <> parsePragmas endComments
+
+    traverse_ displayWarning ws
+
     inputFields  <- foldM (&) inputFieldsC refactorings
 
-    let commentsToOM :: Comments -> OptionsMorphism
-        commentsToOM (Comments cs) = foldMap parseOptionsMorphism cs
-
-        optsEndo :: OptionsMorphism
-        optsEndo = (foldMap . foldMap) commentsToOM inputFieldsC <> commentsToOM endComments
+    let optsEndo :: OptionsMorphism
+        optsEndo = foldMap pragmaToOM pragmas
 
     let v = C.cabalSpecFromVersionDigits
           $ C.versionNumbers
@@ -148,3 +151,13 @@ ppConfVar (C.OS os)     = PP.text "os"   PP.<> PP.parens (C.pretty os)
 ppConfVar (C.Arch arch) = PP.text "arch" PP.<> PP.parens (C.pretty arch)
 ppConfVar (C.Flag name) = PP.text "flag" PP.<> PP.parens (C.pretty name)
 ppConfVar (C.Impl c v)  = PP.text "impl" PP.<> PP.parens (C.pretty c PP.<+> C.pretty v)
+
+-------------------------------------------------------------------------------
+-- Pragma to OM
+-------------------------------------------------------------------------------
+
+pragmaToOM :: Pragma -> OptionsMorphism
+pragmaToOM (PragmaOptIndent n)    = mkOptionsMorphism $ \opts -> opts { optIndent = n }
+pragmaToOM PragmaNoOp             = mempty
+pragmaToOM PragmaExpandModules {} = mempty
+
