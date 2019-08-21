@@ -7,6 +7,9 @@ install :
 self-test :
 	cabal v2-run cabal-fmt -- cabal-fmt.cabal
 
+self-test-raw :
+	$$(cabal-plan list-bin cabal-fmt) cabal-fmt.cabal
+
 golden :
 	cabal v2-run golden
 

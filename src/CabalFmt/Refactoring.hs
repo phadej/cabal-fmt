@@ -41,28 +41,30 @@ refactoringExpandExposedModules = traverseFields refact where
     refact name@(C.Name c n) fls
         | n == "exposed-modules" || n == "other-modules"
         , dirs <- parse c = do
-            files <- traverse getFiles dirs
+            files <- traverseOf (traverse . _1) getFiles dirs
 
             let newModules :: [C.FieldLine Comments]
                 newModules = catMaybes
                     [ return $ C.FieldLine mempty $ C.toUTF8BS $ intercalate "." parts
-                    | files' <- files
+                    | (files', mns) <- files
                     , file <- files'
                     , let parts = splitDirectories $ dropExtension file
                     , all C.validModuleComponent parts
+                    , let mn = C.fromComponents parts
+                    , mn `notElem` mns
                     ]
 
             pure (name, newModules ++ fls)
         | otherwise = pure (name, fls)
 
-    parse :: Comments -> [FilePath]
+    parse :: Comments -> [(FilePath, [C.ModuleName])]
     parse (Comments bss) = catMaybes
         [ either (const Nothing) Just
         $ C.runParsecParser parser "<input>" $ C.fieldLineStreamFromBS bs
         | bs <- bss
         ]
 
-    parser :: C.ParsecParser FilePath
+    parser :: C.ParsecParser (FilePath, [C.ModuleName])
     parser = do
         _ <- C.string "--"
         C.spaces
@@ -71,12 +73,21 @@ refactoringExpandExposedModules = traverseFields refact where
         _ <- C.string "expand"
         C.spaces
         dir <- C.parsecToken
-        return dir
+        mns <- C.many (C.space *> C.spaces *> C.parsec)
+        return (dir, mns)
 
 -------------------------------------------------------------------------------
 -- Tools
 -------------------------------------------------------------------------------
 
+traverseOf
+    :: Applicative f
+    => ((a -> f b) -> s ->  f t)
+    -> (a -> f b) -> s ->  f t
+traverseOf = id
+
+_1 :: Functor f => (a -> f b) -> (a, c) -> f (b, c)
+_1 f (a, c) = (\b -> (b, c)) <$> f a
 
 traverseFields
     :: Applicative f
