@@ -9,7 +9,7 @@
 module CabalFmt.Comments where
 
 import Data.Foldable (toList)
-import Data.Maybe    (fromMaybe)
+import Data.Maybe    (fromMaybe, isNothing)
 
 import qualified Data.ByteString           as BS
 import qualified Data.ByteString.Char8     as BS8
@@ -26,27 +26,47 @@ newtype Comments = Comments [BS.ByteString]
   deriving stock Show
   deriving newtype (Semigroup, Monoid)
 
+unComments :: Comments -> [BS.ByteString]
+unComments (Comments cs) = cs
+
+nullComments :: Comments -> Bool
+nullComments (Comments cs) = null cs
+
 -------------------------------------------------------------------------------
 -- Attach comments
 -------------------------------------------------------------------------------
 
+-- | Returns a 'C.Field' forest with comments attached.
+--
+-- * Comments are attached to the field after it.
+-- * A glitch: comments "inside" the field are attached to the field after it.
+-- * End-of-file comments are returned separately.
+--
 attachComments
     :: BS.ByteString        -- ^ source with comments
     -> [C.Field C.Position] -- ^ parsed source fields
-    -> [C.Field Comments]
-attachComments input inputFields = overAnn attach inputFields where
+    -> ([C.Field Comments], Comments)
+attachComments input inputFields =
+    (overAnn attach inputFields, endComments)
+  where
     inputFieldsU :: [(FieldPath, C.Field C.Position)]
     inputFieldsU = fieldUniverseN inputFields
 
     comments :: [(Int, Comments)]
     comments = extractComments input
 
-    -- todo: warning when comments are omitted
     comments' :: Map.Map FieldPath Comments
     comments' = Map.fromListWith (flip (<>))
         [ (path, cs)
         | (l, cs) <- comments
         , path <- toList (findPath C.fieldAnn l inputFieldsU)
+        ]
+
+    endComments :: Comments
+    endComments = mconcat
+        [ cs
+        | (l, cs) <- comments
+        , isNothing (findPath C.fieldAnn l inputFieldsU)
         ]
 
     attach :: FieldPath -> C.Position -> Comments

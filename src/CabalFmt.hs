@@ -9,11 +9,11 @@
 --
 module CabalFmt (cabalFmt) where
 
-import Control.Monad        (join, foldM)
+import Control.Monad        (foldM, join)
 import Control.Monad.Except (catchError)
 import Control.Monad.Reader (asks, local)
+import Data.Function        ((&))
 import Data.Maybe           (fromMaybe)
-import Data.Function ((&))
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
@@ -37,10 +37,10 @@ import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
 import CabalFmt.Fields.Modules
 import CabalFmt.Fields.TestedWith
-import CabalFmt.Refactoring
 import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
+import CabalFmt.Refactoring
 
 -------------------------------------------------------------------------------
 -- Main
@@ -51,7 +51,8 @@ cabalFmt filepath contents = do
     indentWith   <- asks optIndent
     gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
-    inputFields  <- foldM (&) (attachComments contents inputFields') refactorings
+    let (inputFieldsC, endComments) = attachComments contents inputFields'
+    inputFields  <- foldM (&) inputFieldsC refactorings
 
     let v = C.cabalSpecFromVersionDigits
           $ C.versionNumbers
@@ -66,6 +67,8 @@ cabalFmt filepath contents = do
             inputFields
 
         return $ C.showFields' fromComments indentWith outputPrettyFields
+            & if nullComments endComments then id else
+                (++ unlines ("" : [ C.fromUTF8BS c | c <- unComments endComments ]))
 
 fromComments :: Comments -> [String]
 fromComments (Comments bss) = map C.fromUTF8BS bss
