@@ -48,18 +48,24 @@ import CabalFmt.Refactoring
 
 cabalFmt :: MonadCabalFmt m => FilePath -> BS.ByteString -> m String
 cabalFmt filepath contents = do
-    indentWith   <- asks optIndent
     gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
     let (inputFieldsC, endComments) = attachComments contents inputFields'
     inputFields  <- foldM (&) inputFieldsC refactorings
+
+    let commentsToOM :: Comments -> OptionsMorphism
+        commentsToOM (Comments cs) = foldMap parseOptionsMorphism cs
+
+        optsEndo :: OptionsMorphism
+        optsEndo = (foldMap . foldMap) commentsToOM inputFieldsC <> commentsToOM endComments
 
     let v = C.cabalSpecFromVersionDigits
           $ C.versionNumbers
           $ C.specVersion
           $ C.packageDescription gpd
 
-    local (\o -> o { optSpecVersion = v }) $ do
+    local (\o -> runOptionsMorphism optsEndo $ o { optSpecVersion = v }) $ do
+        indentWith   <- asks optIndent
 
         outputPrettyFields <- C.genericFromParsecFields
             prettyFieldLines

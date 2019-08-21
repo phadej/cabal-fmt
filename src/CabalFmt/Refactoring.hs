@@ -1,7 +1,8 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
-{-# LANGUAGE OverloadedStrings, RankNTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes        #-}
 module CabalFmt.Refactoring (
     Refactoring,
     Refactoring',
@@ -14,10 +15,10 @@ import System.FilePath (dropExtension, splitDirectories)
 
 import qualified Distribution.Compat.CharParsing     as C
 import qualified Distribution.Fields                 as C
+import qualified Distribution.ModuleName             as C
 import qualified Distribution.Parsec                 as C
 import qualified Distribution.Parsec.FieldLineStream as C
 import qualified Distribution.Simple.Utils           as C
-import qualified Distribution.ModuleName as C
 
 import CabalFmt.Comments
 import CabalFmt.Monad

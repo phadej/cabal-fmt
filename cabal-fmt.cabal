@@ -102,4 +102,5 @@ test-suite golden
     , tasty
     , tasty-golden
 
+-- cabal-fmt: indent=2
 -- end file comment
