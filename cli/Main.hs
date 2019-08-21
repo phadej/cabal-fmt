@@ -57,7 +57,7 @@ optsP :: O.Parser (Bool, Options, [FilePath])
 optsP = (,,)
     <$> O.flag False True (O.short 'i' <> O.long "inplace" <> O.help "process files in-place")
     <*> optsP'
-    <*> many (O.strArgument (O.metavar "FILE" <> O.help "input files"))
+    <*> many (O.strArgument (O.metavar "FILE..." <> O.help "input files"))
   where
     optsP' = Options
         <$> O.option O.auto (O.long "indent" <> O.value (optIndent defaultOptions) <> O.help "Indentation" <> O.showDefault)
