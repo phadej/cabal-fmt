@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CabalFmt.Pragma where
 
-import Data.Bifunctor  (first)
+import Data.Bifunctor  (bimap)
 import Data.ByteString (ByteString)
-import Data.Char       (isLower)
 import Data.Either     (partitionEithers)
+import Data.Maybe      (catMaybes)
 
 import qualified Data.ByteString                     as BS
 import qualified Distribution.Compat.CharParsing     as C
@@ -15,8 +15,7 @@ import qualified Distribution.Parsec.FieldLineStream as C
 import CabalFmt.Comments
 
 data Pragma
-    = PragmaNoOp
-    | PragmaOptIndent Int
+    = PragmaOptIndent Int
     | PragmaExpandModules FilePath [C.ModuleName]
   deriving (Show)
 
@@ -24,10 +23,10 @@ data Pragma
 --
 -- An error ('Left') is reported only if input 'ByteString' starts with @-- cabal-fmt:@.
 --
-parsePragma :: ByteString -> Either String Pragma
+parsePragma :: ByteString -> Either String (Maybe Pragma)
 parsePragma bs = case dropPrefix bs of
-    Nothing  -> Right PragmaNoOp
-    Just bs' -> first show $ C.runParsecParser parser "<input>" $ C.fieldLineStreamFromBS bs'
+    Nothing  -> Right Nothing
+    Just bs' -> bimap show Just $ C.runParsecParser parser "<input>" $ C.fieldLineStreamFromBS bs'
   where
     dropPrefix bs0 = do
         bs1 <- BS.stripPrefix "--" bs0
@@ -62,4 +61,4 @@ stripWhitespace bs = case BS.uncons bs of
                   | otherwise -> bs
 
 parsePragmas :: Comments -> ([String], [Pragma])
-parsePragmas = partitionEithers . map parsePragma . unComments
+parsePragmas = fmap catMaybes . partitionEithers . map parsePragma . unComments

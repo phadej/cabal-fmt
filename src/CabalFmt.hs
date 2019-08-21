@@ -53,13 +53,19 @@ cabalFmt filepath contents = do
     gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
     let (inputFieldsC, endComments) = attachComments contents inputFields'
-    let (ws, pragmas) = foldMap (foldMap parsePragmas) inputFieldsC <> parsePragmas endComments
 
-    traverse_ displayWarning ws
+    -- parse pragmas
+    let parse c = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws *> return (c, ps)
+    inputFieldsP <- traverse (traverse parse) inputFieldsC
+    endCommentsPragmas <- case parsePragmas endComments of
+        (ws, ps) -> traverse_ displayWarning ws *> return ps
 
-    inputFields  <- foldM (&) inputFieldsC refactorings
+    -- apply refactorings
+    inputFieldsR  <- foldM (&) inputFieldsP refactorings
 
-    let optsEndo :: OptionsMorphism
+    -- options morphisms
+    let pragmas = foldMap (foldMap snd) inputFieldsR <> endCommentsPragmas
+        optsEndo :: OptionsMorphism
         optsEndo = foldMap pragmaToOM pragmas
 
     let v = C.cabalSpecFromVersionDigits
@@ -67,8 +73,10 @@ cabalFmt filepath contents = do
           $ C.specVersion
           $ C.packageDescription gpd
 
+
     local (\o -> runOptionsMorphism optsEndo $ o { optSpecVersion = v }) $ do
-        indentWith   <- asks optIndent
+        indentWith <- asks optIndent
+        let inputFields = fmap (fmap fst) inputFieldsR
 
         outputPrettyFields <- C.genericFromParsecFields
             prettyFieldLines
@@ -158,6 +166,4 @@ ppConfVar (C.Impl c v)  = PP.text "impl" PP.<> PP.parens (C.pretty c PP.<+> C.pr
 
 pragmaToOM :: Pragma -> OptionsMorphism
 pragmaToOM (PragmaOptIndent n)    = mkOptionsMorphism $ \opts -> opts { optIndent = n }
-pragmaToOM PragmaNoOp             = mempty
 pragmaToOM PragmaExpandModules {} = mempty
-

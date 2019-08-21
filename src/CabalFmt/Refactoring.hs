@@ -25,10 +25,11 @@ import CabalFmt.Pragma
 -- Refactoring type
 -------------------------------------------------------------------------------
 
+type C = (Comments, [Pragma])
 type Refactoring           = forall m. MonadCabalFmt m => Refactoring' m
-type Refactoring' m        = [C.Field Comments] -> m [C.Field Comments]
+type Refactoring' m        = [C.Field C] -> m [C.Field C]
 type RefactoringOfField    = forall m. MonadCabalFmt m => RefactoringOfField' m
-type RefactoringOfField' m = C.Name Comments -> [C.FieldLine Comments] -> m (C.Name Comments, [C.FieldLine Comments])
+type RefactoringOfField' m = C.Name C -> [C.FieldLine C] -> m (C.Name C, [C.FieldLine C])
 
 -------------------------------------------------------------------------------
 -- Expand exposed-modules
@@ -37,12 +38,12 @@ type RefactoringOfField' m = C.Name Comments -> [C.FieldLine Comments] -> m (C.N
 refactoringExpandExposedModules :: Refactoring
 refactoringExpandExposedModules = traverseFields refact where
     refact :: RefactoringOfField
-    refact name@(C.Name c n) fls
-        | n == "exposed-modules" || n == "other-modules"
-        , dirs <- parse c = do
+    refact name@(C.Name (_, pragmas) n) fls
+        | n == "exposed-modules" || n == "other-modules" = do
+            dirs <- parse pragmas
             files <- traverseOf (traverse . _1) getFiles dirs
 
-            let newModules :: [C.FieldLine Comments]
+            let newModules :: [C.FieldLine C]
                 newModules = catMaybes
                     [ return $ C.FieldLine mempty $ C.toUTF8BS $ intercalate "." parts
                     | (files', mns) <- files
@@ -56,12 +57,12 @@ refactoringExpandExposedModules = traverseFields refact where
             pure (name, newModules ++ fls)
         | otherwise = pure (name, fls)
 
-    parse :: Comments -> [(FilePath, [C.ModuleName])]
-    parse c = case parsePragmas c of
-        (_, pragmas) ->
-            [ (fp, mns)
-            | PragmaExpandModules fp mns <- pragmas
-            ]
+    parse :: MonadCabalFmt m => [Pragma] -> m [(FilePath, [C.ModuleName])]
+    parse = fmap mconcat . traverse go where
+        go (PragmaExpandModules fp mns) = return [ (fp, mns) ]
+        go p = do
+            displayWarning $ "Skipped pragma " ++ show p
+            return []
 
 -------------------------------------------------------------------------------
 -- Tools
@@ -79,7 +80,7 @@ _1 f (a, c) = (\b -> (b, c)) <$> f a
 traverseFields
     :: Applicative f
     => RefactoringOfField' f
-    -> [C.Field Comments] -> f [C.Field Comments]
+    -> [C.Field C] -> f [C.Field C]
 traverseFields f = goMany where
     goMany = traverse go
 
