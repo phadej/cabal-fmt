@@ -65,6 +65,7 @@ library cabal-fmt-internal
     GeneralizedNewtypeDeriving
     OverloadedStrings
     RankNTypes
+    ScopedTypeVariables
 
 executable cabal-fmt
   default-language: Haskell2010
@@ -79,9 +80,7 @@ executable cabal-fmt
     , filepath
 
   -- extra dependencies
-  build-depends:
-    , directory             ^>=1.3.1.5
-    , optparse-applicative  >=0.14.3.0 && <0.16
+  build-depends:    optparse-applicative >=0.14.3.0 && <0.16
 
 test-suite golden
   type:             exitcode-stdio-1.0

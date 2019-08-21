@@ -9,10 +9,11 @@
 --
 module CabalFmt (cabalFmt) where
 
-import Control.Monad        (join)
+import Control.Monad        (join, foldM)
 import Control.Monad.Except (catchError)
 import Control.Monad.Reader (asks, local)
 import Data.Maybe           (fromMaybe)
+import Data.Function ((&))
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
@@ -45,13 +46,12 @@ import CabalFmt.Parser
 -- Main
 -------------------------------------------------------------------------------
 
-cabalFmt :: FilePath -> BS.ByteString -> CabalFmt String
+cabalFmt :: MonadCabalFmt m => FilePath -> BS.ByteString -> m String
 cabalFmt filepath contents = do
-    opts         <- asks id
     indentWith   <- asks optIndent
     gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
-    let inputFields = foldr (\r f -> r opts f) (attachComments contents inputFields') refactorings 
+    inputFields  <- foldM (&) (attachComments contents inputFields') refactorings
 
     let v = C.cabalSpecFromVersionDigits
           $ C.versionNumbers
@@ -74,7 +74,7 @@ fromComments (Comments bss) = map C.fromUTF8BS bss
 -- Refactorings
 -------------------------------------------------------------------------------
 
-refactorings :: [Refactoring]
+refactorings :: MonadCabalFmt m => [Refactoring' m]
 refactorings =
     [ refactoringExpandExposedModules
     ]
@@ -83,11 +83,11 @@ refactorings =
 -- Field prettyfying
 -------------------------------------------------------------------------------
 
-prettyFieldLines :: C.FieldName -> [C.FieldLine ann] -> CabalFmt PP.Doc
+prettyFieldLines :: MonadCabalFmt m => C.FieldName -> [C.FieldLine ann] -> m PP.Doc
 prettyFieldLines fn fls =
     fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn fls
 
-knownField :: C.FieldName -> [C.FieldLine ann] -> CabalFmt (Maybe PP.Doc)
+knownField :: MonadCabalFmt m => C.FieldName -> [C.FieldLine ann] -> m (Maybe PP.Doc)
 knownField fn fls = do
     v <- asks optSpecVersion
     return $ join $ fieldDescrLookup (fieldDescrs v) fn $ \p pp ->
@@ -111,12 +111,12 @@ fieldDescrs v
 -- Sections
 -------------------------------------------------------------------------------
 
-prettySectionArgs :: C.FieldName -> [C.SectionArg ann] -> CabalFmt [PP.Doc]
+prettySectionArgs :: MonadCabalFmt m => C.FieldName -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs x args =
     prettySectionArgs' x args `catchError` \_ ->
         return (C.prettySectionArgs x args)
 
-prettySectionArgs' :: a -> [C.SectionArg ann] -> CabalFmt [PP.Doc]
+prettySectionArgs' :: MonadCabalFmt m => a -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs' _ args = do
     c <- runParseResult "<args>" "" $ C.parseConditionConfVar (map (C.zeroPos <$) args)
     return [ppCondition c]

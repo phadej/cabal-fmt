@@ -3,6 +3,7 @@
 -- Copyright: Oleg Grenrus
 module CabalFmt.Error (Error (..), renderError) where
 
+import Control.Exception (Exception)
 import System.FilePath   (normalise)
 import Text.Parsec.Error (ParseError)
 
@@ -17,6 +18,8 @@ data Error
     | CabalParseError FilePath BS.ByteString [C.PError] (Maybe C.Version) [C.PWarning]
     | PanicCannotParseInput  ParseError
   deriving (Show)
+
+instance Exception Error
 
 renderError :: Error -> IO ()
 renderError (SomeError err) = putStrLn $ "error: " ++ err
