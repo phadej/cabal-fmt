@@ -5,6 +5,7 @@ module Main (main) where
 
 import Control.Applicative (many, (<**>))
 import Data.Foldable       (asum, for_)
+import Data.Version        (showVersion)
 import System.Exit         (exitFailure)
 import System.FilePath     (takeDirectory)
 
@@ -17,6 +18,8 @@ import CabalFmt.Error   (renderError)
 import CabalFmt.Monad   (runCabalFmtIO)
 import CabalFmt.Options
 
+import Paths_cabal_fmt (version)
+
 main :: IO ()
 main = do
     (inplace, opts', filepaths) <- O.execParser optsP'
@@ -28,11 +31,14 @@ main = do
             contents <- BS.readFile filepath
             main' inplace opts (Just filepath) contents
   where
-    optsP' = O.info (optsP <**> O.helper) $ mconcat
+    optsP' = O.info (optsP <**> O.helper <**> versionP) $ mconcat
         [ O.fullDesc
         , O.progDesc "Reformat .cabal files"
         , O.header "cabal-fmt - .cabal file reformatter"
         ]
+
+    versionP = O.infoOption (showVersion version)
+        $ O.long "version" <> O.help "Show version"
 
 main' :: Bool -> Options -> Maybe FilePath -> BS.ByteString -> IO ()
 main' inplace opts mfilepath input = do
@@ -92,3 +98,4 @@ optsP = (,,)
 
     noTabularP = O.flag' (mkOptionsMorphism $ \opts -> opts { optTabular = False })
         $ O.long "no-tabular"
+

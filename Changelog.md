@@ -7,3 +7,4 @@
 - Add `-Werror` option (there are some warnings)
 - Preserve end file comments
 - More pretty `tested-with` formatting
+- Add `--version` flag

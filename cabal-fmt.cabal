@@ -68,6 +68,8 @@ executable cabal-fmt
   default-language: Haskell2010
   hs-source-dirs:   cli
   main-is:          Main.hs
+  other-modules:    Paths_cabal_fmt
+  autogen-modules:  Paths_cabal_fmt
 
   -- dependencies in library
   build-depends:
