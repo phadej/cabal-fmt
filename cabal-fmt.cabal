@@ -1,6 +1,6 @@
 cabal-version:      2.2
 name:               cabal-fmt
-version:            0.1
+version:            0.1.1
 synopsis:           Format .cabal files
 category:           Development
 description:
@@ -14,6 +14,7 @@ author:             Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
 tested-with:        GHC ==8.4.4 || ==8.6.5
 extra-source-files:
+  Changelog.md
   fixtures/*.cabal
   fixtures/*.format
 
