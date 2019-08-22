@@ -73,7 +73,6 @@ cabalFmt filepath contents = do
           $ C.specVersion
           $ C.packageDescription gpd
 
-
     local (\o -> runOptionsMorphism optsEndo $ o { optSpecVersion = v }) $ do
         indentWith <- asks optIndent
         let inputFields = fmap (fmap fst) inputFieldsR

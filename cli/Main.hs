@@ -4,7 +4,7 @@
 module Main (main) where
 
 import Control.Applicative (many, (<**>))
-import Data.Foldable       (for_)
+import Data.Foldable       (asum, for_)
 import System.Exit         (exitFailure)
 
 import qualified Data.ByteString     as BS
@@ -17,7 +17,8 @@ import CabalFmt.Options
 
 main :: IO ()
 main = do
-    (inplace, opts, filepaths) <- O.execParser optsP'
+    (inplace, opts', filepaths) <- O.execParser optsP'
+    let opts = runOptionsMorphism opts' defaultOptions
 
     case filepaths of
         []    -> BS.getContents >>= main' False opts "<stdin>"
@@ -45,12 +46,26 @@ main' inplace opts filepath input = do
 -- Options parser
 -------------------------------------------------------------------------------
 
-optsP :: O.Parser (Bool, Options, [FilePath])
+optsP :: O.Parser (Bool, OptionsMorphism, [FilePath])
 optsP = (,,)
     <$> O.flag False True (O.short 'i' <> O.long "inplace" <> O.help "process files in-place")
     <*> optsP'
     <*> many (O.strArgument (O.metavar "FILE..." <> O.help "input files"))
   where
-    optsP' = Options
-        <$> O.option O.auto (O.long "indent" <> O.value (optIndent defaultOptions) <> O.help "Indentation" <> O.showDefault)
-        <*> pure (optSpecVersion defaultOptions)
+    optsP' = fmap mconcat $ many $ asum
+        [ werrorP
+        , noWerrorP
+        , indentP
+        ]
+        -- <$> werrorP
+        -- <*> O.option O.auto (O.long "indent" <> O.value (optIndent defaultOptions) <> O.help "Indentation" <> O.showDefault)
+        -- <*> pure (optSpecVersion defaultOptions)
+
+    werrorP = O.flag' (mkOptionsMorphism $ \opts -> opts { optError = True })
+        $ O.long "Werror" <> O.help "Treat warnings as errors"
+
+    noWerrorP = O.flag' (mkOptionsMorphism $ \opts -> opts { optError = False })
+        $ O.long "Wno-error" <> O.help "Treat warnings as warnings"
+
+    indentP = O.option (fmap (\n -> mkOptionsMorphism $ \opts -> opts { optIndent = n}) O.auto)
+        $ O.long "indent" <> O.help "Indentation" <> O.metavar "N"

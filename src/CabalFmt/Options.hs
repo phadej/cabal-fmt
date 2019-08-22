@@ -15,14 +15,16 @@ import qualified Distribution.Parsec                 as C
 import qualified Distribution.Parsec.FieldLineStream as C
 
 data Options = Options
-    { optIndent      :: !Int
+    { optError       :: !Bool
+    , optIndent      :: !Int
     , optSpecVersion :: !C.CabalSpecVersion
     }
   deriving Show
 
 defaultOptions :: Options
 defaultOptions = Options
-    { optIndent      = 2
+    { optError       = False
+    , optIndent      = 2
     , optSpecVersion = C.cabalSpecLatest
     }
 

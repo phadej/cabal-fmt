@@ -19,11 +19,13 @@ module CabalFmt.Monad (
     ) where
 
 import Control.Exception      (catch, throwIO, try)
+import Control.Monad          (when)
 import Control.Monad.Except   (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.Reader   (MonadReader, ReaderT (..), runReaderT)
+import Control.Monad.Reader   (MonadReader, ReaderT (..), runReaderT, asks)
 import System.FilePath        ((</>))
 import System.IO              (hPutStrLn, stderr)
+import System.Exit (exitFailure)
 
 import qualified System.Directory as D
 
@@ -59,7 +61,9 @@ newtype CabalFmt a = CabalFmt { unCabalFmt :: ReaderT Options (Either Error) a }
 instance MonadCabalFmt CabalFmt where
     listDirectory _      = return []
     doesDirectoryExist _ = return False
-    displayWarning _     = return ()
+    displayWarning w     = do
+        werror <- asks optError
+        when werror $ throwError $ WarningError w
 
 runCabalFmt :: Options -> CabalFmt a -> Either Error a
 runCabalFmt opts m = runReaderT (unCabalFmt m) opts
@@ -81,7 +85,11 @@ instance MonadError Error CabalFmtIO where
 instance MonadCabalFmt CabalFmtIO where
     listDirectory      = liftIO . D.listDirectory
     doesDirectoryExist = liftIO . D.doesDirectoryExist
-    displayWarning w   = liftIO $ hPutStrLn stderr $ "WARNING: " ++ w
+    displayWarning w   = do
+        werror <- asks optError
+        liftIO $ do
+            hPutStrLn stderr $ (if werror then "ERROR: " else "WARNING: ") ++ w
+            when werror exitFailure
 
 runCabalFmtIO :: Options -> CabalFmtIO a -> IO (Either Error a)
 runCabalFmtIO opts m = try $ runReaderT (unCabalFmtIO m) opts
