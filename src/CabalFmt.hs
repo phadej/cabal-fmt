@@ -123,7 +123,7 @@ fieldDescrs opts
     <> otherExtensionsF
     <> exposedModulesF
     <> otherModulesF
-    <> testedWithF
+    <> testedWithF opts
     <> coerceFieldDescrs C.packageDescriptionFieldGrammar
     <> coerceFieldDescrs C.buildInfoFieldGrammar
 
