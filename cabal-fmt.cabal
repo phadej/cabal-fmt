@@ -39,11 +39,6 @@ library cabal-fmt-internal
     , pretty      ^>=1.1.3.6
 
   -- cabal-fmt: expand src
-  --
-  -- Note: the module list is expanded only when cabal-fmt is run from a
-  -- command line, with a single file. This is to get right relative
-  -- working directory.
-  --
   exposed-modules:
     CabalFmt
     CabalFmt.Comments
@@ -79,6 +74,7 @@ executable cabal-fmt
     , base
     , bytestring
     , cabal-fmt-internal
+    , directory
     , filepath
 
   -- extra dependencies
