@@ -7,16 +7,12 @@ module CabalFmt.Options (
     OptionsMorphism, mkOptionsMorphism, runOptionsMorphism,
     ) where
 
-import Data.ByteString (ByteString)
-
 import qualified Distribution.CabalSpecVersion       as C
-import qualified Distribution.Compat.CharParsing     as C
-import qualified Distribution.Parsec                 as C
-import qualified Distribution.Parsec.FieldLineStream as C
 
 data Options = Options
     { optError       :: !Bool
     , optIndent      :: !Int
+    , optTabular     :: !Bool
     , optSpecVersion :: !C.CabalSpecVersion
     }
   deriving Show
@@ -25,6 +21,7 @@ defaultOptions :: Options
 defaultOptions = Options
     { optError       = False
     , optIndent      = 2
+    , optTabular     = True
     , optSpecVersion = C.cabalSpecLatest
     }
 

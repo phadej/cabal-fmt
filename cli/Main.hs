@@ -56,16 +56,21 @@ optsP = (,,)
         [ werrorP
         , noWerrorP
         , indentP
+        , tabularP
+        , noTabularP
         ]
-        -- <$> werrorP
-        -- <*> O.option O.auto (O.long "indent" <> O.value (optIndent defaultOptions) <> O.help "Indentation" <> O.showDefault)
-        -- <*> pure (optSpecVersion defaultOptions)
 
     werrorP = O.flag' (mkOptionsMorphism $ \opts -> opts { optError = True })
         $ O.long "Werror" <> O.help "Treat warnings as errors"
 
     noWerrorP = O.flag' (mkOptionsMorphism $ \opts -> opts { optError = False })
-        $ O.long "Wno-error" <> O.help "Treat warnings as warnings"
+        $ O.long "Wno-error"
 
     indentP = O.option (fmap (\n -> mkOptionsMorphism $ \opts -> opts { optIndent = n}) O.auto)
         $ O.long "indent" <> O.help "Indentation" <> O.metavar "N"
+
+    tabularP = O.flag' (mkOptionsMorphism $ \opts -> opts { optTabular = True })
+        $ O.long "tabular" <> O.help "Tabular formatting"
+
+    noTabularP = O.flag' (mkOptionsMorphism $ \opts -> opts { optTabular = False })
+        $ O.long "no-tabular"

@@ -11,7 +11,7 @@ module CabalFmt (cabalFmt) where
 
 import Control.Monad        (foldM, join)
 import Control.Monad.Except (catchError)
-import Control.Monad.Reader (asks, local)
+import Control.Monad.Reader (ask, asks, local)
 import Data.Foldable        (traverse_)
 import Data.Function        ((&))
 import Data.Maybe           (fromMaybe)
@@ -108,16 +108,17 @@ prettyFieldLines fn fls =
 
 knownField :: MonadCabalFmt m => C.FieldName -> [C.FieldLine ann] -> m (Maybe PP.Doc)
 knownField fn fls = do
-    v <- asks optSpecVersion
-    return $ join $ fieldDescrLookup (fieldDescrs v) fn $ \p pp ->
+    opts <- ask
+    let v = optSpecVersion opts
+    return $ join $ fieldDescrLookup (fieldDescrs opts) fn $ \p pp ->
         case C.runParsecParser' v p "<input>" (C.fieldLinesToStream fls) of
             Right x -> Just (pp x)
             Left _  -> Nothing
 
-fieldDescrs :: C.CabalSpecVersion -> FieldDescrs () ()
-fieldDescrs v
-    =  buildDependsF v
-    <> setupDependsF v
+fieldDescrs :: Options -> FieldDescrs () ()
+fieldDescrs opts
+    =  buildDependsF opts
+    <> setupDependsF opts
     <> defaultExtensionsF
     <> otherExtensionsF
     <> exposedModulesF
@@ -165,4 +166,5 @@ ppConfVar (C.Impl c v)  = PP.text "impl" PP.<> PP.parens (C.pretty c PP.<+> C.pr
 
 pragmaToOM :: Pragma -> OptionsMorphism
 pragmaToOM (PragmaOptIndent n)    = mkOptionsMorphism $ \opts -> opts { optIndent = n }
+pragmaToOM (PragmaOptTabular b)   = mkOptionsMorphism $ \opts -> opts { optTabular = b }
 pragmaToOM PragmaExpandModules {} = mempty

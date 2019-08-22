@@ -25,18 +25,19 @@ import qualified Distribution.Types.VersionRange    as C
 import qualified Text.PrettyPrint                   as PP
 
 import CabalFmt.Fields
+import CabalFmt.Options
 
-setupDependsF :: C.CabalSpecVersion -> FieldDescrs () ()
-setupDependsF v = singletonF "setup-depends" (pretty v) parse
+setupDependsF :: Options -> FieldDescrs () ()
+setupDependsF opts = singletonF "setup-depends" (pretty opts) parse
 
-buildDependsF :: C.CabalSpecVersion -> FieldDescrs () ()
-buildDependsF v = singletonF "build-depends" (pretty v) parse
+buildDependsF :: Options -> FieldDescrs () ()
+buildDependsF opts = singletonF "build-depends" (pretty opts) parse
 
 parse :: C.CabalParsing m => m [C.Dependency]
 parse = unpack' (C.alaList C.CommaVCat) <$> C.parsec
 
-pretty :: C.CabalSpecVersion -> [C.Dependency] -> PP.Doc
-pretty v deps = case deps of
+pretty :: Options -> [C.Dependency] -> PP.Doc
+pretty Options { optSpecVersion = v, optTabular = tab } deps = case deps of
     [] -> PP.empty
     [dep] -> C.pretty (C.depPkgName dep) PP.<+> prettyVR vr'
       where
@@ -62,14 +63,14 @@ pretty v deps = case deps of
                 Left [] -> comma PP.<+> PP.text name
                 Left (vi : vis') ->
                     comma PP.<+>
-                    PP.text (leftpad width name) PP.<+>
+                    PP.text (lp width name) PP.<+>
                     PP.hsep
                         ( prettyVi vi
                         : map (\vi' -> PP.text "||" PP.<+> prettyVi' vi') vis'
                         )
                 Right vr ->
                     comma PP.<+>
-                    PP.text (leftpad width name) PP.<+>
+                    PP.text (lp width name) PP.<+>
                     C.pretty vr
           where
             comma | isFirst, v < C.CabalSpecV2_2 = PP.text " "
@@ -81,7 +82,7 @@ pretty v deps = case deps of
         prettyVi (C.LowerBound l C.InclusiveBound, C.UpperBound u C.InclusiveBound)
             | l == u = PP.text "==" PP.<> C.pretty l
         prettyVi (C.LowerBound l lb, C.UpperBound u ub) =
-            prettyLowerBound lb PP.<> PP.text (leftpad width' l')
+            prettyLowerBound lb PP.<> PP.text (lp width' l')
             PP.<+> PP.text "&&" PP.<+>
             prettyUpperBound ub PP.<> C.pretty u
           where
@@ -122,6 +123,9 @@ pretty v deps = case deps of
     firstComponent :: [C.VersionInterval] -> Int
     firstComponent [] = 0
     firstComponent ((C.LowerBound l _, _) : _) = length (C.prettyShow l)
+
+    lp | tab       = leftpad
+       | otherwise = \_ x -> x
 
 leftpad :: Int -> String -> String
 leftpad w s = s ++ replicate (w - length s) ' '

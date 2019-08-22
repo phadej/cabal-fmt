@@ -16,6 +16,7 @@ import CabalFmt.Comments
 
 data Pragma
     = PragmaOptIndent Int
+    | PragmaOptTabular Bool
     | PragmaExpandModules FilePath [C.ModuleName]
   deriving (Show)
 
@@ -37,9 +38,11 @@ parsePragma bs = case dropPrefix bs of
     parser = do
         t <- C.parsecToken
         case t of
-            "expand" -> expandModules
-            "indent" -> indent
-            _        -> fail $ "Unknown pragma " ++ t
+            "expand"     -> expandModules
+            "indent"     -> indent
+            "tabular"    -> return $ PragmaOptTabular True
+            "no-tabular" -> return $ PragmaOptTabular False
+            _            -> fail $ "Unknown pragma " ++ t
 
     expandModules :: C.ParsecParser Pragma
     expandModules = do
