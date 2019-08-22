@@ -2,7 +2,7 @@ build :
 	cabal v2-build
 
 install :
-	cabal v2-install cabal-fmt
+	cabal v2-install cabal-fmt --overwrite-policy=always
 
 self-test :
 	cabal v2-run cabal-fmt -- cabal-fmt.cabal
