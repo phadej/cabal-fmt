@@ -2,78 +2,87 @@
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes        #-}
 module CabalFmt.Refactoring (
     Refactoring,
+    Refactoring',
     refactoringExpandExposedModules,
     ) where
 
-import Data.List       (intercalate, stripPrefix)
+import Data.List       (intercalate)
 import Data.Maybe      (catMaybes)
 import System.FilePath (dropExtension, splitDirectories)
 
-import qualified Distribution.Compat.CharParsing     as C
-import qualified Distribution.Fields                 as C
-import qualified Distribution.Parsec                 as C
-import qualified Distribution.Parsec.FieldLineStream as C
-import qualified Distribution.Simple.Utils           as C
+import qualified Distribution.Fields       as C
+import qualified Distribution.ModuleName   as C
+import qualified Distribution.Simple.Utils as C
 
 import CabalFmt.Comments
-import CabalFmt.Options
+import CabalFmt.Monad
+import CabalFmt.Pragma
 
 -------------------------------------------------------------------------------
 -- Refactoring type
 -------------------------------------------------------------------------------
 
-type Refactoring = Options -> [C.Field Comments] -> [C.Field Comments]
+type C = (Comments, [Pragma])
+type Refactoring           = forall m. MonadCabalFmt m => Refactoring' m
+type Refactoring' m        = [C.Field C] -> m [C.Field C]
+type RefactoringOfField    = forall m. MonadCabalFmt m => RefactoringOfField' m
+type RefactoringOfField' m = C.Name C -> [C.FieldLine C] -> m (C.Name C, [C.FieldLine C])
 
 -------------------------------------------------------------------------------
 -- Expand exposed-modules
 -------------------------------------------------------------------------------
 
 refactoringExpandExposedModules :: Refactoring
-refactoringExpandExposedModules opts = overField refact where
-    refact name@(C.Name c n) fls
-        | n == "exposed-modules" || n == "other-modules"
-        , definitions <- parse c =
-            let newModules :: [C.FieldLine Comments]
+refactoringExpandExposedModules = traverseFields refact where
+    refact :: RefactoringOfField
+    refact name@(C.Name (_, pragmas) n) fls
+        | n == "exposed-modules" || n == "other-modules" = do
+            dirs <- parse pragmas
+            files <- traverseOf (traverse . _1) getFiles dirs
+
+            let newModules :: [C.FieldLine C]
                 newModules = catMaybes
-                    [ do rest <- stripPrefix prefix fp
-                         return $ C.FieldLine mempty $ C.toUTF8BS $ intercalate "." rest
-                    | prefix <- definitions
-                    , fp <- fileList
+                    [ return $ C.FieldLine mempty $ C.toUTF8BS $ intercalate "." parts
+                    | (files', mns) <- files
+                    , file <- files'
+                    , let parts = splitDirectories $ dropExtension file
+                    , all C.validModuleComponent parts
+                    , let mn = C.fromComponents parts
+                    , mn `notElem` mns
                     ]
-            in (name, newModules ++ fls)
-        | otherwise = (name, fls)
 
-    fileList :: [[FilePath]]
-    fileList = map (splitDirectories . dropExtension) (optFileList opts)
+            pure (name, newModules ++ fls)
+        | otherwise = pure (name, fls)
 
-    parse :: Comments -> [[FilePath]]
-    parse (Comments bss) = catMaybes
-        [ either (const Nothing) Just
-        $ C.runParsecParser parser "<input>" $ C.fieldLineStreamFromBS bs
-        | bs <- bss
-        ]
-
-    parser :: C.ParsecParser [FilePath]
-    parser = do
-        _ <- C.string "--"
-        C.spaces
-        _ <- C.string "cabal-fmt:"
-        C.spaces
-        _ <- C.string "expand"
-        C.spaces
-        dir <- C.parsecToken
-        return (splitDirectories dir)
+    parse :: MonadCabalFmt m => [Pragma] -> m [(FilePath, [C.ModuleName])]
+    parse = fmap mconcat . traverse go where
+        go (PragmaExpandModules fp mns) = return [ (fp, mns) ]
+        go p = do
+            displayWarning $ "Skipped pragma " ++ show p
+            return []
 
 -------------------------------------------------------------------------------
 -- Tools
 -------------------------------------------------------------------------------
 
-overField :: (C.Name Comments -> [C.FieldLine Comments] -> (C.Name Comments, [C.FieldLine Comments]))
-          -> [C.Field Comments] -> [C.Field Comments]
-overField f = goMany where
-    goMany = map go
+traverseOf
+    :: Applicative f
+    => ((a -> f b) -> s ->  f t)
+    -> (a -> f b) -> s ->  f t
+traverseOf = id
 
-    go (C.Field name fls)       = let ~(name', fls') = f name fls in C.Field name' fls'
-    go (C.Section name args fs) = C.Section name args (goMany fs)
+_1 :: Functor f => (a -> f b) -> (a, c) -> f (b, c)
+_1 f (a, c) = (\b -> (b, c)) <$> f a
+
+traverseFields
+    :: Applicative f
+    => RefactoringOfField' f
+    -> [C.Field C] -> f [C.Field C]
+traverseFields f = goMany where
+    goMany = traverse go
+
+    go (C.Field name fls)       = uncurry C.Field <$> f name fls
+    go (C.Section name args fs) = C.Section name args <$> goMany fs

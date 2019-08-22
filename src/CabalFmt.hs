@@ -9,9 +9,11 @@
 --
 module CabalFmt (cabalFmt) where
 
-import Control.Monad        (join)
+import Control.Monad        (foldM, join)
 import Control.Monad.Except (catchError)
-import Control.Monad.Reader (asks, local)
+import Control.Monad.Reader (ask, asks, local)
+import Data.Foldable        (traverse_)
+import Data.Function        ((&))
 import Data.Maybe           (fromMaybe)
 
 import qualified Data.ByteString                              as BS
@@ -36,29 +38,44 @@ import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
 import CabalFmt.Fields.Modules
 import CabalFmt.Fields.TestedWith
-import CabalFmt.Refactoring
 import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
+import CabalFmt.Pragma
+import CabalFmt.Refactoring
 
 -------------------------------------------------------------------------------
 -- Main
 -------------------------------------------------------------------------------
 
-cabalFmt :: FilePath -> BS.ByteString -> CabalFmt String
+cabalFmt :: MonadCabalFmt m => FilePath -> BS.ByteString -> m String
 cabalFmt filepath contents = do
-    opts         <- asks id
-    indentWith   <- asks optIndent
     gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
-    let inputFields = foldr (\r f -> r opts f) (attachComments contents inputFields') refactorings 
+    let (inputFieldsC, endComments) = attachComments contents inputFields'
+
+    -- parse pragmas
+    let parse c = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws *> return (c, ps)
+    inputFieldsP <- traverse (traverse parse) inputFieldsC
+    endCommentsPragmas <- case parsePragmas endComments of
+        (ws, ps) -> traverse_ displayWarning ws *> return ps
+
+    -- apply refactorings
+    inputFieldsR  <- foldM (&) inputFieldsP refactorings
+
+    -- options morphisms
+    let pragmas = foldMap (foldMap snd) inputFieldsR <> endCommentsPragmas
+        optsEndo :: OptionsMorphism
+        optsEndo = foldMap pragmaToOM pragmas
 
     let v = C.cabalSpecFromVersionDigits
           $ C.versionNumbers
           $ C.specVersion
           $ C.packageDescription gpd
 
-    local (\o -> o { optSpecVersion = v }) $ do
+    local (\o -> runOptionsMorphism optsEndo $ o { optSpecVersion = v }) $ do
+        indentWith <- asks optIndent
+        let inputFields = fmap (fmap fst) inputFieldsR
 
         outputPrettyFields <- C.genericFromParsecFields
             prettyFieldLines
@@ -66,6 +83,8 @@ cabalFmt filepath contents = do
             inputFields
 
         return $ C.showFields' fromComments indentWith outputPrettyFields
+            & if nullComments endComments then id else
+                (++ unlines ("" : [ C.fromUTF8BS c | c <- unComments endComments ]))
 
 fromComments :: Comments -> [String]
 fromComments (Comments bss) = map C.fromUTF8BS bss
@@ -74,7 +93,7 @@ fromComments (Comments bss) = map C.fromUTF8BS bss
 -- Refactorings
 -------------------------------------------------------------------------------
 
-refactorings :: [Refactoring]
+refactorings :: MonadCabalFmt m => [Refactoring' m]
 refactorings =
     [ refactoringExpandExposedModules
     ]
@@ -83,27 +102,28 @@ refactorings =
 -- Field prettyfying
 -------------------------------------------------------------------------------
 
-prettyFieldLines :: C.FieldName -> [C.FieldLine ann] -> CabalFmt PP.Doc
+prettyFieldLines :: MonadCabalFmt m => C.FieldName -> [C.FieldLine ann] -> m PP.Doc
 prettyFieldLines fn fls =
     fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn fls
 
-knownField :: C.FieldName -> [C.FieldLine ann] -> CabalFmt (Maybe PP.Doc)
+knownField :: MonadCabalFmt m => C.FieldName -> [C.FieldLine ann] -> m (Maybe PP.Doc)
 knownField fn fls = do
-    v <- asks optSpecVersion
-    return $ join $ fieldDescrLookup (fieldDescrs v) fn $ \p pp ->
+    opts <- ask
+    let v = optSpecVersion opts
+    return $ join $ fieldDescrLookup (fieldDescrs opts) fn $ \p pp ->
         case C.runParsecParser' v p "<input>" (C.fieldLinesToStream fls) of
             Right x -> Just (pp x)
             Left _  -> Nothing
 
-fieldDescrs :: C.CabalSpecVersion -> FieldDescrs () ()
-fieldDescrs v
-    =  buildDependsF v
-    <> setupDependsF v
+fieldDescrs :: Options -> FieldDescrs () ()
+fieldDescrs opts
+    =  buildDependsF opts
+    <> setupDependsF opts
     <> defaultExtensionsF
     <> otherExtensionsF
     <> exposedModulesF
     <> otherModulesF
-    <> testedWithF
+    <> testedWithF opts
     <> coerceFieldDescrs C.packageDescriptionFieldGrammar
     <> coerceFieldDescrs C.buildInfoFieldGrammar
 
@@ -111,12 +131,12 @@ fieldDescrs v
 -- Sections
 -------------------------------------------------------------------------------
 
-prettySectionArgs :: C.FieldName -> [C.SectionArg ann] -> CabalFmt [PP.Doc]
+prettySectionArgs :: MonadCabalFmt m => C.FieldName -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs x args =
     prettySectionArgs' x args `catchError` \_ ->
         return (C.prettySectionArgs x args)
 
-prettySectionArgs' :: a -> [C.SectionArg ann] -> CabalFmt [PP.Doc]
+prettySectionArgs' :: MonadCabalFmt m => a -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs' _ args = do
     c <- runParseResult "<args>" "" $ C.parseConditionConfVar (map (C.zeroPos <$) args)
     return [ppCondition c]
@@ -139,3 +159,12 @@ ppConfVar (C.OS os)     = PP.text "os"   PP.<> PP.parens (C.pretty os)
 ppConfVar (C.Arch arch) = PP.text "arch" PP.<> PP.parens (C.pretty arch)
 ppConfVar (C.Flag name) = PP.text "flag" PP.<> PP.parens (C.pretty name)
 ppConfVar (C.Impl c v)  = PP.text "impl" PP.<> PP.parens (C.pretty c PP.<+> C.pretty v)
+
+-------------------------------------------------------------------------------
+-- Pragma to OM
+-------------------------------------------------------------------------------
+
+pragmaToOM :: Pragma -> OptionsMorphism
+pragmaToOM (PragmaOptIndent n)    = mkOptionsMorphism $ \opts -> opts { optIndent = n }
+pragmaToOM (PragmaOptTabular b)   = mkOptionsMorphism $ \opts -> opts { optTabular = b }
+pragmaToOM PragmaExpandModules {} = mempty

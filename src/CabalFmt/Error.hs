@@ -3,7 +3,9 @@
 -- Copyright: Oleg Grenrus
 module CabalFmt.Error (Error (..), renderError) where
 
+import Control.Exception (Exception)
 import System.FilePath   (normalise)
+import System.IO         (hPutStr, hPutStrLn, stderr)
 import Text.Parsec.Error (ParseError)
 
 import qualified Data.ByteString            as BS
@@ -16,13 +18,17 @@ data Error
     = SomeError String
     | CabalParseError FilePath BS.ByteString [C.PError] (Maybe C.Version) [C.PWarning]
     | PanicCannotParseInput  ParseError
+    | WarningError String
   deriving (Show)
 
+instance Exception Error
+
 renderError :: Error -> IO ()
-renderError (SomeError err) = putStrLn $ "error: " ++ err
-renderError (PanicCannotParseInput err) = putStrLn $ "panic! " ++ show err
-renderError (CabalParseError filepath contents errors _ warnings) = 
-    putStr $ renderParseError filepath contents errors warnings
+renderError (SomeError err) = hPutStrLn stderr $ "error: " ++ err
+renderError (PanicCannotParseInput err) = hPutStrLn stderr $ "panic! " ++ show err
+renderError (CabalParseError filepath contents errors _ warnings) =
+    hPutStr stderr $ renderParseError filepath contents errors warnings
+renderError (WarningError w) = hPutStrLn stderr $ "error (-Werror): " ++ w
 
 -------------------------------------------------------------------------------
 -- Rendering of Cabal parser error

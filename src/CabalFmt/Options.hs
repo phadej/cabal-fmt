@@ -4,20 +4,39 @@
 module CabalFmt.Options (
     Options (..),
     defaultOptions,
+    OptionsMorphism, mkOptionsMorphism, runOptionsMorphism,
     ) where
 
-import qualified Distribution.CabalSpecVersion as C
+import qualified Distribution.CabalSpecVersion       as C
 
 data Options = Options
-    { optIndent      :: !Int
+    { optError       :: !Bool
+    , optIndent      :: !Int
+    , optTabular     :: !Bool
     , optSpecVersion :: !C.CabalSpecVersion
-    , optFileList    :: ![FilePath]
     }
   deriving Show
 
 defaultOptions :: Options
 defaultOptions = Options
-    { optIndent      = 2
+    { optError       = False
+    , optIndent      = 2
+    , optTabular     = True
     , optSpecVersion = C.cabalSpecLatest
-    , optFileList    = []
     }
+
+newtype OptionsMorphism = OM (Options -> Options)
+
+runOptionsMorphism :: OptionsMorphism -> Options -> Options
+runOptionsMorphism (OM f) = f
+
+mkOptionsMorphism :: (Options -> Options) -> OptionsMorphism
+mkOptionsMorphism = OM
+
+instance Semigroup OptionsMorphism where
+    OM f <> OM g = OM (g . f)
+
+instance Monoid OptionsMorphism where
+    mempty  = OM id
+    mappend = (<>)
+
