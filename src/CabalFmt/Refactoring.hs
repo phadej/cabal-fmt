@@ -26,10 +26,10 @@ import CabalFmt.Pragma
 -------------------------------------------------------------------------------
 
 type C = (Comments, [Pragma])
-type Refactoring           = forall m. MonadCabalFmt m => Refactoring' m
-type Refactoring' m        = [C.Field C] -> m [C.Field C]
-type RefactoringOfField    = forall m. MonadCabalFmt m => RefactoringOfField' m
-type RefactoringOfField' m = C.Name C -> [C.FieldLine C] -> m (C.Name C, [C.FieldLine C])
+type Refactoring             = forall r m. MonadCabalFmt r m => Refactoring' r m
+type Refactoring' r m        = [C.Field C] -> m [C.Field C]
+type RefactoringOfField      = forall r m. MonadCabalFmt r m => RefactoringOfField' r m
+type RefactoringOfField' r m = C.Name C -> [C.FieldLine C] -> m (C.Name C, [C.FieldLine C])
 
 -------------------------------------------------------------------------------
 -- Expand exposed-modules
@@ -57,7 +57,7 @@ refactoringExpandExposedModules = traverseFields refact where
             pure (name, newModules ++ fls)
         | otherwise = pure (name, fls)
 
-    parse :: MonadCabalFmt m => [Pragma] -> m [(FilePath, [C.ModuleName])]
+    parse :: MonadCabalFmt r m => [Pragma] -> m [(FilePath, [C.ModuleName])]
     parse = fmap mconcat . traverse go where
         go (PragmaExpandModules fp mns) = return [ (fp, mns) ]
         go p = do
@@ -79,7 +79,7 @@ _1 f (a, c) = (\b -> (b, c)) <$> f a
 
 traverseFields
     :: Applicative f
-    => RefactoringOfField' f
+    => RefactoringOfField' r f
     -> [C.Field C] -> f [C.Field C]
 traverseFields f = goMany where
     goMany = traverse go

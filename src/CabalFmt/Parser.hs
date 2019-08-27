@@ -14,17 +14,17 @@ import qualified Distribution.Types.GenericPackageDescription as C
 import CabalFmt.Error
 import CabalFmt.Monad
 
-runParseResult :: MonadCabalFmt m => FilePath -> BS.ByteString -> C.ParseResult a -> m a
+runParseResult :: MonadCabalFmt r m => FilePath -> BS.ByteString -> C.ParseResult a -> m a
 runParseResult filepath contents pr = case result of
     Right gpd -> return gpd
     Left (mspecVersion, errors) -> throwError $ CabalParseError filepath contents errors mspecVersion warnings
   where
     (warnings, result) = C.runParseResult pr
 
-parseGpd :: MonadCabalFmt m => FilePath -> BS.ByteString -> m C.GenericPackageDescription
+parseGpd :: MonadCabalFmt r m => FilePath -> BS.ByteString -> m C.GenericPackageDescription
 parseGpd filepath contents = runParseResult filepath contents $ C.parseGenericPackageDescription contents
 
-parseFields :: MonadCabalFmt m => BS.ByteString -> m [C.Field C.Position]
+parseFields :: MonadCabalFmt r m => BS.ByteString -> m [C.Field C.Position]
 parseFields contents = case C.readFields contents of
     Left err -> throwError $ PanicCannotParseInput err
     Right x  -> return x
