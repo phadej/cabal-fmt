@@ -9,12 +9,13 @@
 --
 module CabalFmt (cabalFmt) where
 
-import Control.Monad        (foldM, join)
-import Control.Monad.Except (catchError)
-import Control.Monad.Reader (ask, asks, local)
-import Data.Foldable        (traverse_)
-import Data.Function        ((&))
-import Data.Maybe           (fromMaybe)
+import Control.Monad            (foldM, join)
+import Control.Monad.Except     (catchError)
+import Control.Monad.Reader     (asks, local)
+import Data.Foldable            (traverse_)
+import Data.Function            ((&))
+import Data.Maybe               (fromMaybe)
+import Distribution.Compat.Lens (over, view)
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
@@ -48,7 +49,7 @@ import CabalFmt.Refactoring
 -- Main
 -------------------------------------------------------------------------------
 
-cabalFmt :: MonadCabalFmt m => FilePath -> BS.ByteString -> m String
+cabalFmt :: MonadCabalFmt r m => FilePath -> BS.ByteString -> m String
 cabalFmt filepath contents = do
     gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
@@ -73,8 +74,8 @@ cabalFmt filepath contents = do
           $ C.specVersion
           $ C.packageDescription gpd
 
-    local (\o -> runOptionsMorphism optsEndo $ o { optSpecVersion = v }) $ do
-        indentWith <- asks optIndent
+    local (over options $ \o -> runOptionsMorphism optsEndo $ o { optSpecVersion = v }) $ do
+        indentWith <- asks (optIndent . view options)
         let inputFields = fmap (fmap fst) inputFieldsR
 
         outputPrettyFields <- C.genericFromParsecFields
@@ -93,7 +94,7 @@ fromComments (Comments bss) = map C.fromUTF8BS bss
 -- Refactorings
 -------------------------------------------------------------------------------
 
-refactorings :: MonadCabalFmt m => [Refactoring' m]
+refactorings :: MonadCabalFmt r m => [Refactoring' r m]
 refactorings =
     [ refactoringExpandExposedModules
     ]
@@ -102,13 +103,13 @@ refactorings =
 -- Field prettyfying
 -------------------------------------------------------------------------------
 
-prettyFieldLines :: MonadCabalFmt m => C.FieldName -> [C.FieldLine ann] -> m PP.Doc
+prettyFieldLines :: MonadCabalFmt r m => C.FieldName -> [C.FieldLine ann] -> m PP.Doc
 prettyFieldLines fn fls =
     fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn fls
 
-knownField :: MonadCabalFmt m => C.FieldName -> [C.FieldLine ann] -> m (Maybe PP.Doc)
+knownField :: MonadCabalFmt r m => C.FieldName -> [C.FieldLine ann] -> m (Maybe PP.Doc)
 knownField fn fls = do
-    opts <- ask
+    opts <- asks (view options)
     let v = optSpecVersion opts
     return $ join $ fieldDescrLookup (fieldDescrs opts) fn $ \p pp ->
         case C.runParsecParser' v p "<input>" (C.fieldLinesToStream fls) of
@@ -131,12 +132,12 @@ fieldDescrs opts
 -- Sections
 -------------------------------------------------------------------------------
 
-prettySectionArgs :: MonadCabalFmt m => C.FieldName -> [C.SectionArg ann] -> m [PP.Doc]
+prettySectionArgs :: MonadCabalFmt r m => C.FieldName -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs x args =
     prettySectionArgs' x args `catchError` \_ ->
         return (C.prettySectionArgs x args)
 
-prettySectionArgs' :: MonadCabalFmt m => a -> [C.SectionArg ann] -> m [PP.Doc]
+prettySectionArgs' :: MonadCabalFmt r m => a -> [C.SectionArg ann] -> m [PP.Doc]
 prettySectionArgs' _ args = do
     c <- runParseResult "<args>" "" $ C.parseConditionConfVar (map (C.zeroPos <$) args)
     return [ppCondition c]

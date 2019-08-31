@@ -5,7 +5,10 @@ module CabalFmt.Options (
     Options (..),
     defaultOptions,
     OptionsMorphism, mkOptionsMorphism, runOptionsMorphism,
+    HasOptions(..),
     ) where
+
+import Distribution.Compat.Lens (LensLike')
 
 import qualified Distribution.CabalSpecVersion       as C
 
@@ -40,3 +43,8 @@ instance Monoid OptionsMorphism where
     mempty  = OM id
     mappend = (<>)
 
+class HasOptions e where
+    options :: Functor f => LensLike' f e Options
+
+instance HasOptions Options where
+    options = id

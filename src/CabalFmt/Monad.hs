@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE FunctionalDependencies     #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 module CabalFmt.Monad (
     -- * Monad class
@@ -42,7 +42,7 @@ import CabalFmt.Options
 -- * errors of 'Error'
 -- * can list directories
 --
-class (MonadReader Options m, MonadError Error m) => MonadCabalFmt m where
+class (HasOptions r, MonadReader r m, MonadError Error m) => MonadCabalFmt r m | m -> r where
     listDirectory      :: FilePath -> m [FilePath]
     doesDirectoryExist :: FilePath -> m Bool
     displayWarning     :: String -> m ()
@@ -56,9 +56,9 @@ class (MonadReader Options m, MonadError Error m) => MonadCabalFmt m where
 -- 'listDirectory' always return empty list.
 --
 newtype CabalFmt a = CabalFmt { unCabalFmt :: ReaderT Options (Either Error) a }
-  deriving newtype (Functor, Applicative, Monad, MonadReader Options, MonadError Error)
+  deriving newtype (Functor, Applicative, Monad, MonadError Error, MonadReader Options)
 
-instance MonadCabalFmt CabalFmt where
+instance MonadCabalFmt Options CabalFmt where
     listDirectory _      = return []
     doesDirectoryExist _ = return False
     displayWarning w     = do
@@ -72,8 +72,17 @@ runCabalFmt opts m = runReaderT (unCabalFmt m) opts
 -- IO
 -------------------------------------------------------------------------------
 
-newtype CabalFmtIO a = CabalFmtIO { unCabalFmtIO :: ReaderT Options IO a }
-  deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader Options)
+-- | Options with root for directory traversals
+data Options' = Options'
+    { optRootDir :: Maybe FilePath
+    , optOpt     :: Options
+    }
+
+instance HasOptions Options' where
+    options f (Options' mfp o) = Options' mfp <$> f o
+
+newtype CabalFmtIO a = CabalFmtIO { unCabalFmtIO :: ReaderT Options' IO a }
+  deriving newtype (Functor, Applicative, Monad, MonadIO, MonadReader Options')
 
 instance MonadError Error CabalFmtIO where
     throwError = liftIO . throwIO
@@ -82,23 +91,31 @@ instance MonadError Error CabalFmtIO where
       where
         unCabalFmtIO' r m' = runReaderT (unCabalFmtIO m') r
 
-instance MonadCabalFmt CabalFmtIO where
-    listDirectory      = liftIO . D.listDirectory
-    doesDirectoryExist = liftIO . D.doesDirectoryExist
+instance MonadCabalFmt Options' CabalFmtIO where
+    listDirectory p = do
+        rd <- asks optRootDir
+        case rd of
+            Nothing -> return []
+            Just d  -> liftIO (D.listDirectory (d </> p))
+    doesDirectoryExist p = do
+        rd <- asks optRootDir
+        case rd of
+            Nothing -> return False
+            Just d  -> liftIO (D.doesDirectoryExist (d </> p))
     displayWarning w   = do
-        werror <- asks optError
+        werror <- asks (optError . optOpt)
         liftIO $ do
             hPutStrLn stderr $ (if werror then "ERROR: " else "WARNING: ") ++ w
             when werror exitFailure
 
-runCabalFmtIO :: Options -> CabalFmtIO a -> IO (Either Error a)
-runCabalFmtIO opts m = try $ runReaderT (unCabalFmtIO m) opts
+runCabalFmtIO :: Maybe FilePath -> Options -> CabalFmtIO a -> IO (Either Error a)
+runCabalFmtIO mfp opts m = try $ runReaderT (unCabalFmtIO m) (Options' mfp opts)
 
 -------------------------------------------------------------------------------
 -- Files
 -------------------------------------------------------------------------------
 
-getFiles :: MonadCabalFmt m => FilePath -> m [FilePath]
+getFiles :: MonadCabalFmt r m => FilePath -> m [FilePath]
 getFiles = getDirectoryContentsRecursive' check where
     check "dist-newstyle" = False
     check ('.' : _)       = False
@@ -112,7 +129,7 @@ getFiles = getDirectoryContentsRecursive' check where
 --
 -- /Note:/ From @Cabal@'s "Distribution.Simple.Utils"
 getDirectoryContentsRecursive'
-    :: forall m. MonadCabalFmt m
+    :: forall m r. MonadCabalFmt r m
     => (FilePath -> Bool) -- ^ Check, whether to recurse
     -> FilePath           -- ^ top dir
     -> m [FilePath]

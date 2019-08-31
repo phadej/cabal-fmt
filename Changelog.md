@@ -1,3 +1,7 @@
+# 0.1.1.1
+
+- Don't change current working directories. Don't expand if used on stdin.
+
 # 0.1.1
 
 - Change metavar of file arguments to be `FILE...`,

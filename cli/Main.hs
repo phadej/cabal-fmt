@@ -5,13 +5,13 @@ module Main (main) where
 
 import Control.Applicative (many, (<**>))
 import Data.Foldable       (asum, for_)
+import Data.Maybe          (fromMaybe)
 import Data.Version        (showVersion)
 import System.Exit         (exitFailure)
 import System.FilePath     (takeDirectory)
 
 import qualified Data.ByteString     as BS
 import qualified Options.Applicative as O
-import qualified System.Directory    as D
 
 import CabalFmt         (cabalFmt)
 import CabalFmt.Error   (renderError)
@@ -42,21 +42,11 @@ main = do
 
 main' :: Bool -> Options -> Maybe FilePath -> BS.ByteString -> IO ()
 main' inplace opts mfilepath input = do
-    cwd <- D.getCurrentDirectory
-
-    -- change to the directory where 'filepath' is.
-    -- so expanding works
-    filepath <- case mfilepath of
-        Nothing       -> return "<stdin>"
-        Just filepath -> do
-            D.setCurrentDirectory (takeDirectory filepath)
-            return filepath
+    -- name of the input
+    let filepath = fromMaybe "<stdin>" mfilepath
 
     -- process
-    res <- runCabalFmtIO opts (cabalFmt filepath input)
-
-    -- change the cwd back
-    D.setCurrentDirectory cwd
+    res <- runCabalFmtIO (takeDirectory <$> mfilepath) opts (cabalFmt filepath input)
 
     case res of
         Right output
