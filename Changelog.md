@@ -1,6 +1,7 @@
-# 0.1.1.1
+# 0.1.2
 
 - Don't change current working directories. Don't expand if used on stdin.
+- Sort module names case-insensitively
 
 # 0.1.1
 
