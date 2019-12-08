@@ -7,6 +7,7 @@ module CabalFmt.Fields.Modules (
     exposedModulesF,
     ) where
 
+import Data.Char                   (toLower)
 import Data.Function               (on)
 import Data.List                   (nub, sortBy)
 import Distribution.Compat.Newtype
@@ -29,13 +30,19 @@ parse :: C.CabalParsing m => m [C.ModuleName]
 parse = unpack' (C.alaList' C.VCat C.MQuoted) <$> C.parsec
 
 pretty :: [C.ModuleName] -> PP.Doc
-pretty = PP.vcat . map C.pretty . nub . sortBy (cmp `on` C.prettyShow)
+pretty
+    = PP.vcat . map C.pretty
+    . nub
+    . sortBy (cmp `on` map strToLower . C.components)
   where
     cmp a b = case dropCommonPrefix a b of
         ([], [])  -> EQ
         ([], _:_) -> LT
         (_:_, []) -> GT
         (a', b')  -> compare a' b'
+
+strToLower :: String -> String
+strToLower = map toLower
 
 dropCommonPrefix :: Eq a => [a] -> [a] -> ([a], [a])
 dropCommonPrefix [] [] = ([], [])

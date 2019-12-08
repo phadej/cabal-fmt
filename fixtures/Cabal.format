@@ -265,8 +265,8 @@ library
     Distribution.CabalSpecVersion
     Distribution.Compat.Binary
     Distribution.Compat.CreatePipe
-    Distribution.Compat.DList
     Distribution.Compat.Directory
+    Distribution.Compat.DList
     Distribution.Compat.Environment
     Distribution.Compat.Exception
     Distribution.Compat.Graph
@@ -289,13 +289,6 @@ library
     Distribution.PackageDescription.Utils
     Distribution.Pretty
     Distribution.ReadE
-    Distribution.SPDX
-    Distribution.SPDX.License
-    Distribution.SPDX.LicenseExceptionId
-    Distribution.SPDX.LicenseExpression
-    Distribution.SPDX.LicenseId
-    Distribution.SPDX.LicenseListVersion
-    Distribution.SPDX.LicenseReference
     Distribution.Simple
     Distribution.Simple.Bench
     Distribution.Simple.Build
@@ -347,6 +340,13 @@ library
     Distribution.Simple.UHC
     Distribution.Simple.UserHooks
     Distribution.Simple.Utils
+    Distribution.SPDX
+    Distribution.SPDX.License
+    Distribution.SPDX.LicenseExceptionId
+    Distribution.SPDX.LicenseExpression
+    Distribution.SPDX.LicenseId
+    Distribution.SPDX.LicenseListVersion
+    Distribution.SPDX.LicenseReference
     Distribution.System
     Distribution.TestSuite
     Distribution.Text
@@ -364,13 +364,13 @@ library
     Distribution.Types.ComponentLocalBuildInfo
     Distribution.Types.ComponentName
     Distribution.Types.ComponentRequestedSpec
-    Distribution.Types.CondTree
     Distribution.Types.Condition
+    Distribution.Types.CondTree
     Distribution.Types.Dependency
     Distribution.Types.DependencyMap
-    Distribution.Types.ExeDependency
     Distribution.Types.Executable
     Distribution.Types.ExecutableScope
+    Distribution.Types.ExeDependency
     Distribution.Types.ExposedModule
     Distribution.Types.ForeignLib
     Distribution.Types.ForeignLibOption
@@ -442,8 +442,8 @@ library
     Distribution.Fields.Field
     Distribution.Fields.Lexer
     Distribution.Fields.LexerMonad
-    Distribution.Fields.ParseResult
     Distribution.Fields.Parser
+    Distribution.Fields.ParseResult
     Distribution.Fields.Pretty
     Distribution.PackageDescription.FieldGrammar
     Distribution.PackageDescription.Parsec
@@ -540,10 +540,10 @@ test-suite unit-tests
     UnitTests.Distribution.Compat.CreatePipe
     UnitTests.Distribution.Compat.Graph
     UnitTests.Distribution.Compat.Time
-    UnitTests.Distribution.SPDX
     UnitTests.Distribution.Simple.Glob
     UnitTests.Distribution.Simple.Program.Internal
     UnitTests.Distribution.Simple.Utils
+    UnitTests.Distribution.SPDX
     UnitTests.Distribution.System
     UnitTests.Distribution.Types.GenericPackageDescription
     UnitTests.Distribution.Utils.Generic
