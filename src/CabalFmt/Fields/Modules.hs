@@ -7,17 +7,13 @@ module CabalFmt.Fields.Modules (
     exposedModulesF,
     ) where
 
-import Data.Char                   (toLower)
-import Data.Function               (on)
-import Data.List                   (nub, sortBy)
-import Distribution.Compat.Newtype
-
 import qualified Distribution.ModuleName      as C
 import qualified Distribution.Parsec          as C
 import qualified Distribution.Parsec.Newtypes as C
 import qualified Distribution.Pretty          as C
 import qualified Text.PrettyPrint             as PP
 
+import CabalFmt.Prelude
 import CabalFmt.Fields
 
 exposedModulesF :: FieldDescrs () ()

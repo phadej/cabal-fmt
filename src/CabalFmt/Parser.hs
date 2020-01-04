@@ -3,8 +3,6 @@
 -- Copyright: Oleg Grenrus
 module CabalFmt.Parser where
 
-import Control.Monad.Except (throwError)
-
 import qualified Data.ByteString                              as BS
 import qualified Distribution.Fields                          as C
 import qualified Distribution.PackageDescription.Parsec       as C
@@ -13,6 +11,7 @@ import qualified Distribution.Types.GenericPackageDescription as C
 
 import CabalFmt.Error
 import CabalFmt.Monad
+import CabalFmt.Prelude
 
 runParseResult :: MonadCabalFmt r m => FilePath -> BS.ByteString -> C.ParseResult a -> m a
 runParseResult filepath contents pr = case result of
