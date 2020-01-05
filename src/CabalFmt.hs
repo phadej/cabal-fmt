@@ -9,13 +9,9 @@
 --
 module CabalFmt (cabalFmt) where
 
-import Control.Monad            (foldM, join)
-import Control.Monad.Except     (catchError)
-import Control.Monad.Reader     (asks, local)
-import Data.Foldable            (traverse_)
-import Data.Function            ((&))
-import Data.Maybe               (fromMaybe)
-import Distribution.Compat.Lens (over, view)
+import Control.Monad        (foldM, join)
+import Control.Monad.Except (catchError)
+import Control.Monad.Reader (asks, local)
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
@@ -43,6 +39,7 @@ import CabalFmt.Monad
 import CabalFmt.Options
 import CabalFmt.Parser
 import CabalFmt.Pragma
+import CabalFmt.Prelude
 import CabalFmt.Refactoring
 
 -------------------------------------------------------------------------------

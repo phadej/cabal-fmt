@@ -7,11 +7,6 @@ module CabalFmt.Fields.BuildDepends (
     setupDependsF,
     ) where
 
-import Control.Arrow               ((&&&))
-import Data.Char                   (toLower)
-import Data.List                   (sortOn)
-import Distribution.Compat.Newtype
-
 import qualified Distribution.CabalSpecVersion      as C
 import qualified Distribution.Parsec                as C
 import qualified Distribution.Parsec.Newtypes       as C
@@ -24,6 +19,7 @@ import qualified Distribution.Types.VersionInterval as C
 import qualified Distribution.Types.VersionRange    as C
 import qualified Text.PrettyPrint                   as PP
 
+import CabalFmt.Prelude
 import CabalFmt.Fields
 import CabalFmt.Options
 

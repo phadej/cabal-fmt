@@ -7,9 +7,6 @@ module CabalFmt.Fields.TestedWith (
     testedWithF,
     ) where
 
-import Data.Set                    (Set)
-import Distribution.Compat.Newtype
-
 import qualified Data.Map.Strict               as Map
 import qualified Data.Set                      as Set
 import qualified Distribution.CabalSpecVersion as C
@@ -20,6 +17,7 @@ import qualified Distribution.Pretty           as C
 import qualified Distribution.Version          as C
 import qualified Text.PrettyPrint              as PP
 
+import CabalFmt.Prelude
 import CabalFmt.Fields
 import CabalFmt.Options
 

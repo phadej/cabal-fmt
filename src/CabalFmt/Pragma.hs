@@ -1,17 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 module CabalFmt.Pragma where
 
-import Data.Bifunctor  (bimap)
-import Data.ByteString (ByteString)
-import Data.Either     (partitionEithers)
-import Data.Maybe      (catMaybes)
-
 import qualified Data.ByteString                     as BS
 import qualified Distribution.Compat.CharParsing     as C
 import qualified Distribution.ModuleName             as C
 import qualified Distribution.Parsec                 as C
 import qualified Distribution.Parsec.FieldLineStream as C
 
+import CabalFmt.Prelude
 import CabalFmt.Comments
 
 data Pragma

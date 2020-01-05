@@ -8,15 +8,14 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 module CabalFmt.Comments where
 
-import Data.Foldable (toList)
-import Data.Maybe    (fromMaybe, isNothing)
-
 import qualified Data.ByteString           as BS
 import qualified Data.ByteString.Char8     as BS8
 import qualified Data.Map.Strict           as Map
 import qualified Distribution.Fields       as C
 import qualified Distribution.Fields.Field as C
 import qualified Distribution.Parsec       as C
+
+import CabalFmt.Prelude
 
 -------------------------------------------------------------------------------
 -- Comments wrapper

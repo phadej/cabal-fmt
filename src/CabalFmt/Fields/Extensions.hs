@@ -7,15 +7,13 @@ module CabalFmt.Fields.Extensions (
     defaultExtensionsF,
     ) where
 
-import Data.List                   (sortOn)
-import Distribution.Compat.Newtype
-
 import qualified Distribution.Parsec          as C
 import qualified Distribution.Parsec.Newtypes as C
 import qualified Distribution.Pretty          as C
 import qualified Language.Haskell.Extension   as C
 import qualified Text.PrettyPrint             as PP
 
+import CabalFmt.Prelude
 import CabalFmt.Fields
 
 otherExtensionsF :: FieldDescrs () ()

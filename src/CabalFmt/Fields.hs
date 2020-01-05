@@ -11,15 +11,15 @@ module CabalFmt.Fields (
     singletonF,
     ) where
 
-import Distribution.Compat.Newtype
-
-import qualified Data.Map.Strict           as Map
-import qualified Distribution.FieldGrammar as C
-import qualified Distribution.Fields.Field as C
-import qualified Distribution.Parsec       as C
-import qualified Distribution.Pretty       as C
+import qualified Data.Map.Strict                 as Map
 import qualified Distribution.Compat.CharParsing as C
-import qualified Text.PrettyPrint          as PP
+import qualified Distribution.FieldGrammar       as C
+import qualified Distribution.Fields.Field       as C
+import qualified Distribution.Parsec             as C
+import qualified Distribution.Pretty             as C
+import qualified Text.PrettyPrint                as PP
+
+import CabalFmt.Prelude
 
 -------------------------------------------------------------------------------
 -- FieldDescr variant
