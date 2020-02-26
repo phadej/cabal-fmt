@@ -1,6 +1,18 @@
-Turns
+# cabal-fmt
 
+## Synopsis
+
+```sh
+$ cabal install cabal-fmt
+$ ...
+$ cabal-fmt --inplace example.cabal
 ```
+
+## Output
+
+Turns this...
+
+```cabal
 cabal-version: 2.4
 name: cabal-fmt
 version: 0
@@ -19,9 +31,9 @@ executable cabal-fmt
       RankNTypes
 ```
 
-into
+...into this:
 
-```
+```cabal
 cabal-version: 2.4
 name:          cabal-fmt
 version:       0
