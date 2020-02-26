@@ -1,6 +1,17 @@
-Turns
+# cabal-fmt
 
+## Usage
+
+```sh
+$ cabal install cabal-fmt
+$ cabal-fmt example.cabal > example-formatted.cabal
 ```
+
+## Output
+
+Turns this...
+
+```yaml
 cabal-version: 2.4
 name: cabal-fmt
 version: 0
@@ -19,9 +30,9 @@ executable cabal-fmt
       RankNTypes
 ```
 
-into
+...into this:
 
-```
+```yaml
 cabal-version: 2.4
 name:          cabal-fmt
 version:       0
