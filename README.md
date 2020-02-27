@@ -5,22 +5,7 @@
 ```sh
 $ cabal install cabal-fmt
 $ ...
-% cabal-fmt --help
-cabal-fmt - .cabal file reformatter
-
-Usage: cabal-fmt [-i|--inplace] 
-                 [--Werror | --Wno-error | --indent N | --tabular | 
-                   --no-tabular] [FILE...] [--version]
-  Reformat .cabal files
-
-Available options:
-  -i,--inplace             process files in-place  <-- !!! 
-  --Werror                 Treat warnings as errors
-  --indent N               Indentation
-  --tabular                Tabular formatting
-  FILE...                  input files
-  -h,--help                Show this help text
-  --version                Show version
+$ cabal-fmt -i example.cabal
 ```
 
 ## Output
