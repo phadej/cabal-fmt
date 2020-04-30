@@ -10,7 +10,6 @@
 module CabalFmt (cabalFmt) where
 
 import Control.Monad        (foldM, join)
-import Control.Monad.Except (catchError)
 import Control.Monad.Reader (asks, local)
 
 import qualified Data.ByteString                              as BS
@@ -24,6 +23,7 @@ import qualified Distribution.Parsec                          as C
 import qualified Distribution.Pretty                          as C
 import qualified Distribution.Simple.Utils                    as C
 import qualified Distribution.Types.Condition                 as C
+import qualified Distribution.Types.ConfVar                   as C
 import qualified Distribution.Types.GenericPackageDescription as C
 import qualified Distribution.Types.PackageDescription        as C
 import qualified Distribution.Types.Version                   as C

@@ -3,10 +3,11 @@
 -- Copyright: Oleg Grenrus
 module CabalFmt.Error (Error (..), renderError) where
 
-import Control.Exception (Exception)
-import System.FilePath   (normalise)
-import System.IO         (hPutStr, hPutStrLn, stderr)
-import Text.Parsec.Error (ParseError)
+import Control.Exception  (Exception)
+import Data.List.NonEmpty (NonEmpty)
+import System.FilePath    (normalise)
+import System.IO          (hPutStr, hPutStrLn, stderr)
+import Text.Parsec.Error  (ParseError)
 
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Char8      as BS8
@@ -16,7 +17,7 @@ import qualified Distribution.Types.Version as C
 
 data Error
     = SomeError String
-    | CabalParseError FilePath BS.ByteString [C.PError] (Maybe C.Version) [C.PWarning]
+    | CabalParseError FilePath BS.ByteString (NonEmpty C.PError) (Maybe C.Version) [C.PWarning]
     | PanicCannotParseInput  ParseError
     | WarningError String
   deriving (Show)
@@ -38,7 +39,7 @@ renderError (WarningError w) = hPutStrLn stderr $ "error (-Werror): " ++ w
 renderParseError
     :: FilePath
     -> BS.ByteString
-    -> [C.PError]
+    -> NonEmpty C.PError
     -> [C.PWarning]
     -> String
 renderParseError filepath contents errors warnings = unlines $
