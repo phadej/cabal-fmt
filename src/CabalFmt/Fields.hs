@@ -95,6 +95,10 @@ instance C.FieldGrammar FieldDescrs where
         PP.text
         (C.munch $ const True)
 
+    freeTextFieldDefST fn _ = singletonF fn
+        PP.text
+        (C.munch $ const True)
+
     prefixedFields _fnPfx _l = F mempty
     knownField _           = pure ()
     deprecatedSince _  _ x = x

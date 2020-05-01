@@ -1,3 +1,7 @@
+# 0.1.3
+
+- GHC-8.10 support. Require Cabal-3.2
+
 # 0.1.2
 
 - Don't change current working directories. Don't expand if used on stdin.
