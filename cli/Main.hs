@@ -17,6 +17,7 @@ import CabalFmt         (cabalFmt)
 import CabalFmt.Error   (renderError)
 import CabalFmt.Monad   (runCabalFmtIO)
 import CabalFmt.Options
+import CabalFmt.Prelude
 
 import Paths_cabal_fmt (version)
 
@@ -50,8 +51,9 @@ main' inplace opts mfilepath input = do
 
     case res of
         Right output
-            | inplace   -> writeFile filepath output
-            | otherwise -> putStr output
+            | inplace   -> BS.writeFile filepath outputBS
+            | otherwise -> BS.putStr outputBS
+          where outputBS = toUTF8BS output
         Left err     -> do
             renderError err
             exitFailure
