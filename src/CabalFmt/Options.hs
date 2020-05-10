@@ -2,6 +2,7 @@
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
 module CabalFmt.Options (
+    Mode (..),
     Options (..),
     defaultOptions,
     OptionsMorphism, mkOptionsMorphism, runOptionsMorphism,
@@ -12,11 +13,18 @@ import Distribution.Compat.Lens (LensLike')
 
 import qualified Distribution.CabalSpecVersion       as C
 
+data Mode
+    = ModeStdout
+    | ModeInplace
+    | ModeCheck
+  deriving (Eq, Show)
+
 data Options = Options
     { optError       :: !Bool
     , optIndent      :: !Int
     , optTabular     :: !Bool
     , optSpecVersion :: !C.CabalSpecVersion
+    , optMode        :: !Mode
     }
   deriving Show
 
@@ -26,6 +34,7 @@ defaultOptions = Options
     , optIndent      = 2
     , optTabular     = True
     , optSpecVersion = C.cabalSpecLatest
+    , optMode        = ModeStdout
     }
 
 newtype OptionsMorphism = OM (Options -> Options)
