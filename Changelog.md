@@ -1,6 +1,7 @@
 # 0.1.3
 
 - GHC-8.10 support. Require Cabal-3.2
+- Add `--check` operation mode
 
 # 0.1.2
 

@@ -6,7 +6,6 @@ module Main (main) where
 import Control.Applicative (many, (<**>))
 import Control.Monad       (unless, when)
 import Data.Foldable       (asum, for_)
-import Data.Maybe          (fromMaybe)
 import Data.Traversable    (for)
 import Data.Version        (showVersion)
 import System.Exit         (exitFailure)
