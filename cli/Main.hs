@@ -4,11 +4,14 @@
 module Main (main) where
 
 import Control.Applicative (many, (<**>))
+import Control.Monad       (unless, when)
 import Data.Foldable       (asum, for_)
 import Data.Maybe          (fromMaybe)
+import Data.Traversable    (for)
 import Data.Version        (showVersion)
 import System.Exit         (exitFailure)
 import System.FilePath     (takeDirectory)
+import System.IO           (hPutStrLn, stderr)
 
 import qualified Data.ByteString     as BS
 import qualified Options.Applicative as O
@@ -17,19 +20,26 @@ import CabalFmt         (cabalFmt)
 import CabalFmt.Error   (renderError)
 import CabalFmt.Monad   (runCabalFmtIO)
 import CabalFmt.Options
+import CabalFmt.Prelude
 
 import Paths_cabal_fmt (version)
 
 main :: IO ()
 main = do
-    (inplace, opts', filepaths) <- O.execParser optsP'
+    (opts', filepaths) <- O.execParser optsP'
     let opts = runOptionsMorphism opts' defaultOptions
 
-    case filepaths of
-        []    -> BS.getContents >>= main' False opts Nothing
-        (_:_) -> for_ filepaths $ \filepath -> do
+    notFormatted <- catMaybes <$> case filepaths of
+        []    -> fmap pure $ BS.getContents >>= main' opts Nothing
+        (_:_) -> for filepaths $ \filepath -> do
             contents <- BS.readFile filepath
-            main' inplace opts (Just filepath) contents
+            main' opts (Just filepath) contents
+
+    when ((optMode opts == ModeCheck) && not (null notFormatted)) $ do
+        for_ notFormatted $ \filepath ->
+            hPutStrLn stderr $ "error: Input " <> filepath <> " is not formatted."
+        exitFailure
+
   where
     optsP' = O.info (optsP <**> O.helper <**> versionP) $ mconcat
         [ O.fullDesc
@@ -40,8 +50,8 @@ main = do
     versionP = O.infoOption (showVersion version)
         $ O.long "version" <> O.help "Show version"
 
-main' :: Bool -> Options -> Maybe FilePath -> BS.ByteString -> IO ()
-main' inplace opts mfilepath input = do
+main' :: Options -> Maybe FilePath -> BS.ByteString -> IO (Maybe FilePath)
+main' opts mfilepath input = do
     -- name of the input
     let filepath = fromMaybe "<stdin>" mfilepath
 
@@ -49,9 +59,19 @@ main' inplace opts mfilepath input = do
     res <- runCabalFmtIO (takeDirectory <$> mfilepath) opts (cabalFmt filepath input)
 
     case res of
-        Right output
-            | inplace   -> writeFile filepath output
-            | otherwise -> putStr output
+        Right output -> do
+            let outputBS = toUTF8BS output
+                formatted = outputBS == input
+
+            case optMode opts of
+                ModeStdout -> BS.putStr outputBS
+                ModeInplace -> case mfilepath of
+                    Nothing -> BS.putStr outputBS
+                    Just _  -> unless formatted $ BS.writeFile filepath outputBS
+                _ -> return ()
+
+            return $ if formatted then Nothing else Just filepath
+
         Left err     -> do
             renderError err
             exitFailure
@@ -60,10 +80,9 @@ main' inplace opts mfilepath input = do
 -- Options parser
 -------------------------------------------------------------------------------
 
-optsP :: O.Parser (Bool, OptionsMorphism, [FilePath])
-optsP = (,,)
-    <$> O.flag False True (O.short 'i' <> O.long "inplace" <> O.help "process files in-place")
-    <*> optsP'
+optsP :: O.Parser (OptionsMorphism, [FilePath])
+optsP = (,)
+    <$> optsP'
     <*> many (O.strArgument (O.metavar "FILE..." <> O.help "input files"))
   where
     optsP' = fmap mconcat $ many $ asum
@@ -72,6 +91,9 @@ optsP = (,,)
         , indentP
         , tabularP
         , noTabularP
+        , stdoutP
+        , inplaceP
+        , checkP
         ]
 
     werrorP = O.flag' (mkOptionsMorphism $ \opts -> opts { optError = True })
@@ -88,4 +110,13 @@ optsP = (,,)
 
     noTabularP = O.flag' (mkOptionsMorphism $ \opts -> opts { optTabular = False })
         $ O.long "no-tabular"
+
+    stdoutP = O.flag' (mkOptionsMorphism $ \opts -> opts { optMode = ModeStdout })
+        $ O.long "stdout" <> O.help "Write output to stdout (default)"
+
+    inplaceP = O.flag' (mkOptionsMorphism $ \opts -> opts { optMode = ModeInplace })
+        $ O.short 'i' <> O.long "inplace" <> O.help "Process files in-place"
+
+    checkP = O.flag' (mkOptionsMorphism $ \opts -> opts { optMode = ModeCheck })
+        $ O.short 'c' <> O.long "check" <> O.help "Fail with non-zero exit code if input is not formatted"
 
