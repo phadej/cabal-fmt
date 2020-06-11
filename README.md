@@ -61,3 +61,17 @@ executable cabal-fmt
     OverloadedStrings
     RankNTypes
 ```
+
+## Editor Integration
+
+### Emacs
+
+If you have `cabal-fmt` in your `$PATH`, you can auto-format `.cabal` files in
+your project by putting this in the project directory's `.dir-locals.el`:
+
+```elisp
+((haskell-cabal-mode
+  (eval .
+    (add-hook 'before-save-hook
+      (lambda () (haskell-mode-buffer-apply-command "cabal-fmt")) nil t))))
+```
