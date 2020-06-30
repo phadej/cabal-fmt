@@ -75,3 +75,10 @@ your project by putting this in the project directory's `.dir-locals.el`:
     (add-hook 'before-save-hook
       (lambda () (haskell-mode-buffer-apply-command "cabal-fmt")) nil t))))
 ```
+
+### Vim
+
+There are currently two options, both requiring `cabal-fmt` to be in your `$PATH`:
+
+  - [`vim-cabalfmt`](https://github.com/sdiehl/vim-cabalfmt), a standalone plugin
+  - [`neoformat`](https://github.com/sbdchd/neoformat), a general formatter with `cabal-fmt` support
