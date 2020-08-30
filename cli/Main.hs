@@ -90,6 +90,8 @@ optsP = (,)
         , indentP
         , tabularP
         , noTabularP
+        , cabalFileP
+        , noCabalFileP
         , stdoutP
         , inplaceP
         , checkP
@@ -109,6 +111,12 @@ optsP = (,)
 
     noTabularP = O.flag' (mkOptionsMorphism $ \opts -> opts { optTabular = False })
         $ O.long "no-tabular"
+
+    cabalFileP = O.flag' (mkOptionsMorphism $ \opts -> opts { optCabalFile = True })
+        $ O.long "cabal-file"
+
+    noCabalFileP = O.flag' (mkOptionsMorphism $ \opts -> opts { optCabalFile = False })
+        $ O.short 'n' <> O.long "no-cabal-file" <> O.help "Don't parse as .cabal file"
 
     stdoutP = O.flag' (mkOptionsMorphism $ \opts -> opts { optMode = ModeStdout })
         $ O.long "stdout" <> O.help "Write output to stdout (default)"

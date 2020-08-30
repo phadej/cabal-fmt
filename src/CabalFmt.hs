@@ -48,7 +48,6 @@ import CabalFmt.Refactoring
 
 cabalFmt :: MonadCabalFmt r m => FilePath -> BS.ByteString -> m String
 cabalFmt filepath contents = do
-    gpd          <- parseGpd filepath contents
     inputFields' <- parseFields contents
     let (inputFieldsC, endComments) = attachComments contents inputFields'
 
@@ -62,16 +61,23 @@ cabalFmt filepath contents = do
     inputFieldsR  <- foldM (&) inputFieldsP refactorings
 
     -- options morphisms
-    let pragmas = foldMap (foldMap snd) inputFieldsR <> endCommentsPragmas
+    let pragmas :: [Pragma]
+        pragmas = foldMap (foldMap snd) inputFieldsR <> endCommentsPragmas
+
         optsEndo :: OptionsMorphism
         optsEndo = foldMap pragmaToOM pragmas
 
-    let v = C.cabalSpecFromVersionDigits
-          $ C.versionNumbers
-          $ C.specVersion
-          $ C.packageDescription gpd
+    cabalFile <- asks (optCabalFile . view options)
+    csv <- case cabalFile of
+        False -> return C.cabalSpecLatest
+        True  -> do
+            gpd <- parseGpd filepath contents
+            return $ C.cabalSpecFromVersionDigits
+              $ C.versionNumbers
+              $ C.specVersion
+              $ C.packageDescription gpd
 
-    local (over options $ \o -> runOptionsMorphism optsEndo $ o { optSpecVersion = v }) $ do
+    local (over options $ \o -> runOptionsMorphism optsEndo $ o { optSpecVersion = csv }) $ do
         indentWith <- asks (optIndent . view options)
         let inputFields = fmap (fmap fst) inputFieldsR
 

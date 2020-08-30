@@ -10,6 +10,9 @@ self-test :
 self-test-2 :
 	cabal v2-run cabal-fmt -- --no-tabular cabal-fmt.cabal
 
+self-test-3 :
+	cabal v2-run cabal-fmt -- --no-cabal-file cabal.project
+
 self-test-raw :
 	$$(cabal-plan list-bin cabal-fmt) cabal-fmt.cabal
 
