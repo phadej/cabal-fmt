@@ -37,7 +37,6 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
     cmp a b | a == b    = return Nothing
             | otherwise = Just <$> readProcess' "diff" ["-u", goldenPath, "-"] (fromUTF8BS b)
 
-
     readProcess' proc args input = do
         (_, out, _) <- readProcessWithExitCode proc args input
         return out

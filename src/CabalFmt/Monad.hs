@@ -3,8 +3,8 @@
 -- Copyright: Oleg Grenrus
 {-# LANGUAGE DerivingStrategies         #-}
 {-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE FunctionalDependencies     #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 module CabalFmt.Monad (
     -- * Monad class
@@ -18,15 +18,18 @@ module CabalFmt.Monad (
     runCabalFmtIO,
     ) where
 
-import Control.Exception      (catch, throwIO, try)
+import Control.Exception      (IOException, catch, throwIO, try)
 import Control.Monad          (when)
 import Control.Monad.Except   (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
-import Control.Monad.Reader   (MonadReader, ReaderT (..), runReaderT, asks)
+import Control.Monad.Reader   (MonadReader (..), ReaderT (..), asks, runReaderT)
+import Data.Bifunctor         (first)
+import System.Exit            (exitFailure)
 import System.FilePath        ((</>))
 import System.IO              (hPutStrLn, stderr)
-import System.Exit (exitFailure)
 
+import qualified Data.ByteString  as BS
+import qualified Data.Map         as Map
 import qualified System.Directory as D
 
 import CabalFmt.Error
@@ -45,6 +48,9 @@ import CabalFmt.Options
 class (HasOptions r, MonadReader r m, MonadError Error m) => MonadCabalFmt r m | m -> r where
     listDirectory      :: FilePath -> m [FilePath]
     doesDirectoryExist :: FilePath -> m Bool
+
+    readFileBS         :: FilePath -> m (Maybe BS.ByteString)
+
     displayWarning     :: String -> m ()
 
 -------------------------------------------------------------------------------
@@ -55,18 +61,31 @@ class (HasOptions r, MonadReader r m, MonadError Error m) => MonadCabalFmt r m |
 --
 -- 'listDirectory' always return empty list.
 --
-newtype CabalFmt a = CabalFmt { unCabalFmt :: ReaderT Options (Either Error) a }
-  deriving newtype (Functor, Applicative, Monad, MonadError Error, MonadReader Options)
+newtype CabalFmt a = CabalFmt { unCabalFmt :: ReaderT (Options, Map.Map FilePath BS.ByteString) (Either Error) a }
+  deriving newtype (Functor, Applicative, Monad, MonadError Error)
+
+instance MonadReader Options CabalFmt where
+    ask = CabalFmt $ asks fst
+
+    local f (CabalFmt m) = CabalFmt $ local (first f) m
 
 instance MonadCabalFmt Options CabalFmt where
     listDirectory _      = return []
     doesDirectoryExist _ = return False
+    readFileBS p         = CabalFmt $ do
+        files <- asks snd
+        return (Map.lookup p files)
     displayWarning w     = do
         werror <- asks optError
         when werror $ throwError $ WarningError w
 
 runCabalFmt :: Options -> CabalFmt a -> Either Error a
-runCabalFmt opts m = runReaderT (unCabalFmt m) opts
+runCabalFmt = runCabalFmtWithFiles Map.empty
+
+runCabalFmtWithFiles
+    :: Map.Map FilePath BS.ByteString -> Options
+    -> CabalFmt a -> Either Error a
+runCabalFmtWithFiles files opts m = runReaderT (unCabalFmt m) (opts, files)
 
 -------------------------------------------------------------------------------
 -- IO
@@ -102,11 +121,21 @@ instance MonadCabalFmt Options' CabalFmtIO where
         case rd of
             Nothing -> return False
             Just d  -> liftIO (D.doesDirectoryExist (d </> p))
+    readFileBS p = do
+        rd <- asks optRootDir
+        case rd of
+            Nothing -> return Nothing
+            Just d  -> liftIO $ catchIOError $ BS.readFile (d </> p)
     displayWarning w   = do
         werror <- asks (optError . optOpt)
         liftIO $ do
             hPutStrLn stderr $ (if werror then "ERROR: " else "WARNING: ") ++ w
             when werror exitFailure
+
+catchIOError :: IO a -> IO (Maybe a)
+catchIOError m = catch (fmap Just m) handler where
+    handler :: IOException -> IO (Maybe a)
+    handler _ = return Nothing
 
 runCabalFmtIO :: Maybe FilePath -> Options -> CabalFmtIO a -> IO (Either Error a)
 runCabalFmtIO mfp opts m = try $ runReaderT (unCabalFmtIO m) (Options' mfp opts)

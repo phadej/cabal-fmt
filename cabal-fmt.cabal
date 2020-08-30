@@ -83,7 +83,7 @@ executable cabal-fmt
     , filepath
 
   -- extra dependencies
-  build-depends:    optparse-applicative >=0.14.3.0 && <0.16
+  build-depends:    optparse-applicative >=0.14.3.0 && <0.17
 
 test-suite golden
   type:             exitcode-stdio-1.0
