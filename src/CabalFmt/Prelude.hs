@@ -6,6 +6,8 @@
 module CabalFmt.Prelude (
     -- * Control.Arrow
     (&&&),
+    -- * Control.Monad
+    when, unless, void,
     -- * Data.Bifunctor
     bimap,
     -- * Data.Char
@@ -13,7 +15,7 @@ module CabalFmt.Prelude (
     -- * Data.Either
     partitionEithers,
     -- * Data.Foldable
-    toList, traverse_,
+    toList, traverse_, asum,
     -- * Data.Function
     on, (&),
     -- * Data.List
@@ -43,12 +45,13 @@ module CabalFmt.Prelude (
     ) where
 
 import Control.Arrow               ((&&&))
+import Control.Monad               (unless, void, when)
 import Control.Monad.Except        (catchError, throwError)
 import Data.Bifunctor              (bimap)
 import Data.ByteString             (ByteString)
 import Data.Char                   (toLower)
 import Data.Either                 (partitionEithers)
-import Data.Foldable               (toList, traverse_)
+import Data.Foldable               (asum, toList, traverse_)
 import Data.Function               (on, (&))
 import Data.List                   (intercalate, nub, sortBy, sortOn)
 import Data.Maybe                  (catMaybes, fromMaybe, isJust, isNothing)

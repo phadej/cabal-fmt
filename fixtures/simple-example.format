@@ -45,6 +45,8 @@ library
 test-suite doctests
   type:             exitcode-stdio-1.0
   main-is:          doctests.hs
+
+  -- cabal-fmt: fragment build-depends.fragment
   build-depends:
       base
     , doctest           >=0.15 && <0.17

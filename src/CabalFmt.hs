@@ -99,7 +99,8 @@ fromComments (Comments bss) = map C.fromUTF8BS bss
 
 refactorings :: MonadCabalFmt r m => [Refactoring' r m]
 refactorings =
-    [ refactoringExpandExposedModules
+    [ refactoringFragments
+    , refactoringExpandExposedModules
     ]
 
 -------------------------------------------------------------------------------
@@ -172,3 +173,4 @@ pragmaToOM :: Pragma -> OptionsMorphism
 pragmaToOM (PragmaOptIndent n)    = mkOptionsMorphism $ \opts -> opts { optIndent = n }
 pragmaToOM (PragmaOptTabular b)   = mkOptionsMorphism $ \opts -> opts { optTabular = b }
 pragmaToOM PragmaExpandModules {} = mempty
+pragmaToOM PragmaFragment {}      = mempty

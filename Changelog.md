@@ -1,3 +1,12 @@
+# 0.1.4
+
+- Add `-n` / `--no-cabal-file` to format cabal like, but not package files.
+  Useful to format `cabal.project` or `cabal.haskell-ci`.
+- Add `fragment` pragma to substitute a field or a section with
+  contents of external file.
+  Useful in multi-package setting to keep for example
+  `tested-with` field or `common deps` stanza in sync.
+
 # 0.1.3
 
 - GHC-8.10 support. Require Cabal-3.2
