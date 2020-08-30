@@ -9,7 +9,8 @@ module CabalFmt.Refactoring.Type (
     RefactoringOfField,
     RefactoringOfField',
     CommentsPragmas,
-    traverseFields
+    traverseFields,
+    rewriteFields,
     ) where
 
 import qualified Distribution.Fields       as C
@@ -45,3 +46,19 @@ traverseFields f = goMany where
 
     go (C.Field name fls)       = uncurry C.Field <$> f name fls
     go (C.Section name args fs) = C.Section name args <$> goMany fs
+
+-- | A top-to-bottom rewrite of sections and fields
+rewriteFields
+    :: Monad m
+    => (C.Field CommentsPragmas -> m (Maybe (C.Field CommentsPragmas)))
+    -> [C.Field CommentsPragmas] -> m [C.Field CommentsPragmas]
+rewriteFields f = goMany where
+    goMany = traverse go
+
+    go x = do
+        m <- f x
+        case m of
+            Just y -> return y
+            Nothing -> case x of
+                C.Field {}             -> return x
+                C.Section name args fs -> C.Section name args <$> goMany fs

@@ -6,4 +6,5 @@ module CabalFmt.Refactoring (
     ) where
 
 import CabalFmt.Refactoring.ExpandExposedModules as X
+import CabalFmt.Refactoring.Fragments            as X
 import CabalFmt.Refactoring.Type                 as X

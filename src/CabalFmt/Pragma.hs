@@ -14,6 +14,7 @@ data Pragma
     = PragmaOptIndent Int
     | PragmaOptTabular Bool
     | PragmaExpandModules FilePath [C.ModuleName]
+    | PragmaFragment FilePath
   deriving (Show)
 
 -- | Parse pragma from 'ByteString'.
@@ -38,6 +39,7 @@ parsePragma bs = case dropPrefix bs of
             "indent"     -> indent
             "tabular"    -> return $ PragmaOptTabular True
             "no-tabular" -> return $ PragmaOptTabular False
+            "fragment"   -> fragment
             _            -> fail $ "Unknown pragma " ++ t
 
     expandModules :: C.ParsecParser Pragma
@@ -52,6 +54,12 @@ parsePragma bs = case dropPrefix bs of
         C.spaces
         n <- C.integral
         return $ PragmaOptIndent n
+
+    fragment :: C.ParsecParser Pragma
+    fragment = do
+        C.spaces
+        fn <- C.parsecToken
+        return (PragmaFragment fn)
 
 stripWhitespace :: ByteString -> ByteString
 stripWhitespace bs = case BS.uncons bs of

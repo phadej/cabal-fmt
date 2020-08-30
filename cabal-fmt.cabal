@@ -55,6 +55,7 @@ library cabal-fmt-internal
     CabalFmt.Prelude
     CabalFmt.Refactoring
     CabalFmt.Refactoring.ExpandExposedModules
+    CabalFmt.Refactoring.Fragments
     CabalFmt.Refactoring.Type
 
   other-extensions:
@@ -97,6 +98,7 @@ test-suite golden
     , bytestring
     , Cabal
     , cabal-fmt-internal
+    , containers
 
   -- test dependencies
   build-depends:

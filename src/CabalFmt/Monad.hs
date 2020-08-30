@@ -23,6 +23,7 @@ import Control.Monad          (when)
 import Control.Monad.Except   (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.Reader   (MonadReader (..), ReaderT (..), asks, runReaderT)
+import Control.Monad.Writer   (WriterT, runWriterT, tell)
 import Data.Bifunctor         (first)
 import System.Exit            (exitFailure)
 import System.FilePath        ((</>))
@@ -61,7 +62,7 @@ class (HasOptions r, MonadReader r m, MonadError Error m) => MonadCabalFmt r m |
 --
 -- 'listDirectory' always return empty list.
 --
-newtype CabalFmt a = CabalFmt { unCabalFmt :: ReaderT (Options, Map.Map FilePath BS.ByteString) (Either Error) a }
+newtype CabalFmt a = CabalFmt { unCabalFmt :: ReaderT (Options, Map.Map FilePath BS.ByteString) (WriterT [String] (Either Error)) a }
   deriving newtype (Functor, Applicative, Monad, MonadError Error)
 
 instance MonadReader Options CabalFmt where
@@ -77,15 +78,14 @@ instance MonadCabalFmt Options CabalFmt where
         return (Map.lookup p files)
     displayWarning w     = do
         werror <- asks optError
-        when werror $ throwError $ WarningError w
+        if werror
+        then throwError $ WarningError w
+        else CabalFmt $ tell [w]
 
-runCabalFmt :: Options -> CabalFmt a -> Either Error a
-runCabalFmt = runCabalFmtWithFiles Map.empty
-
-runCabalFmtWithFiles
+runCabalFmt
     :: Map.Map FilePath BS.ByteString -> Options
-    -> CabalFmt a -> Either Error a
-runCabalFmtWithFiles files opts m = runReaderT (unCabalFmt m) (opts, files)
+    -> CabalFmt a -> Either Error (a, [String])
+runCabalFmt files opts m = runWriterT (runReaderT (unCabalFmt m) (opts, files))
 
 -------------------------------------------------------------------------------
 -- IO
@@ -126,7 +126,7 @@ instance MonadCabalFmt Options' CabalFmtIO where
         case rd of
             Nothing -> return Nothing
             Just d  -> liftIO $ catchIOError $ BS.readFile (d </> p)
-    displayWarning w   = do
+    displayWarning w = do
         werror <- asks (optError . optOpt)
         liftIO $ do
             hPutStrLn stderr $ (if werror then "ERROR: " else "WARNING: ") ++ w

@@ -1,0 +1,12 @@
+-- Fragment tested-with.fragment contains field "tested-with", expecting field "build-depends".
+cabal-version: 2.4
+name:          fragment
+version:       1
+
+library
+  exposed-modules:  Example
+
+  -- cabal-fmt: fragment tested-with.fragment
+  build-depends:    base >=4.3 && <4.13
+  hs-source-dirs:   src
+  default-language: Haskell2010

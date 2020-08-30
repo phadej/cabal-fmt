@@ -4,8 +4,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes        #-}
 module CabalFmt.Refactoring.ExpandExposedModules (
-    Refactoring,
-    Refactoring',
     refactoringExpandExposedModules,
     ) where
 
