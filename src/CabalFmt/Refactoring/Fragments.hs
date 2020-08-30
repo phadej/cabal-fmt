@@ -27,10 +27,11 @@ refactoringFragments = rewriteFields refact where
         parse (getPragmas field) >>= \mp -> case mp of
             Nothing -> pure Nothing
             Just p  -> readFileBS p >>= \mcontents -> case mcontents of
-                Nothing -> do
-                    displayWarning $ "Fragment " ++ p ++ " doesn't exist."
+                NoIO -> pure Nothing
+                IOError err -> do
+                    displayWarning $ "Fragment " ++ p ++ " failed to read: " ++ show err
                     pure Nothing
-                Just c  -> do
+                Contents c  -> do
                     fields <- parseFields c
                     case (field, fields) of
                         (_, []) -> do

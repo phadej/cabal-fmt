@@ -10,6 +10,7 @@ module CabalFmt.Monad (
     -- * Monad class
     MonadCabalFmt (..),
     getFiles,
+    Contents (..),
     -- * Pure implementation
     CabalFmt,
     runCabalFmt,
@@ -18,7 +19,7 @@ module CabalFmt.Monad (
     runCabalFmtIO,
     ) where
 
-import Control.Exception      (IOException, catch, throwIO, try)
+import Control.Exception      (IOException, catch, throwIO, try, displayException)
 import Control.Monad          (when)
 import Control.Monad.Except   (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
@@ -50,9 +51,14 @@ class (HasOptions r, MonadReader r m, MonadError Error m) => MonadCabalFmt r m |
     listDirectory      :: FilePath -> m [FilePath]
     doesDirectoryExist :: FilePath -> m Bool
 
-    readFileBS         :: FilePath -> m (Maybe BS.ByteString)
+    readFileBS         :: FilePath -> m Contents
 
     displayWarning     :: String -> m ()
+
+data Contents
+    = Contents BS.ByteString
+    | NoIO
+    | IOError String
 
 -------------------------------------------------------------------------------
 -- Pure
@@ -75,7 +81,7 @@ instance MonadCabalFmt Options CabalFmt where
     doesDirectoryExist _ = return False
     readFileBS p         = CabalFmt $ do
         files <- asks snd
-        return (Map.lookup p files)
+        return (maybe (IOError "doesn't exist") Contents $ Map.lookup p files)
     displayWarning w     = do
         werror <- asks optError
         if werror
@@ -124,7 +130,7 @@ instance MonadCabalFmt Options' CabalFmtIO where
     readFileBS p = do
         rd <- asks optRootDir
         case rd of
-            Nothing -> return Nothing
+            Nothing -> return NoIO
             Just d  -> liftIO $ catchIOError $ BS.readFile (d </> p)
     displayWarning w = do
         werror <- asks (optError . optOpt)
@@ -132,10 +138,10 @@ instance MonadCabalFmt Options' CabalFmtIO where
             hPutStrLn stderr $ (if werror then "ERROR: " else "WARNING: ") ++ w
             when werror exitFailure
 
-catchIOError :: IO a -> IO (Maybe a)
-catchIOError m = catch (fmap Just m) handler where
-    handler :: IOException -> IO (Maybe a)
-    handler _ = return Nothing
+catchIOError :: IO BS.ByteString -> IO Contents
+catchIOError m = catch (fmap Contents m) handler where
+    handler :: IOException -> IO Contents
+    handler exc = return (IOError (displayException exc))
 
 runCabalFmtIO :: Maybe FilePath -> Options -> CabalFmtIO a -> IO (Either Error a)
 runCabalFmtIO mfp opts m = try $ runReaderT (unCabalFmtIO m) (Options' mfp opts)

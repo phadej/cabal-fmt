@@ -1,4 +1,4 @@
--- Fragment missing.fragment doesn't exist.
+-- Fragment missing.fragment failed to read: "doesn't exist"
 cabal-version: 2.4
 name:          fragment
 version:       1
