@@ -10,12 +10,30 @@ import qualified Distribution.Parsec.FieldLineStream as C
 import CabalFmt.Prelude
 import CabalFmt.Comments
 
+-------------------------------------------------------------------------------
+-- Types
+-------------------------------------------------------------------------------
+
 data Pragma
-    = PragmaOptIndent Int
-    | PragmaOptTabular Bool
-    | PragmaExpandModules FilePath [C.ModuleName]
+    = FieldPragma FieldPragma
+    | GlobalPragma GlobalPragma
+  deriving (Show)
+
+-- | Pragmas applied per field
+data FieldPragma
+    = PragmaExpandModules FilePath [C.ModuleName]
     | PragmaFragment FilePath
   deriving (Show)
+
+-- | Pragmas affecting global output
+data GlobalPragma
+    = PragmaOptIndent Int
+    | PragmaOptTabular Bool
+  deriving (Show)
+
+-------------------------------------------------------------------------------
+-- Parser
+-------------------------------------------------------------------------------
 
 -- | Parse pragma from 'ByteString'.
 --
@@ -37,8 +55,8 @@ parsePragma bs = case dropPrefix bs of
         case t of
             "expand"     -> expandModules
             "indent"     -> indent
-            "tabular"    -> return $ PragmaOptTabular True
-            "no-tabular" -> return $ PragmaOptTabular False
+            "tabular"    -> return $ GlobalPragma $ PragmaOptTabular True
+            "no-tabular" -> return $ GlobalPragma $ PragmaOptTabular False
             "fragment"   -> fragment
             _            -> fail $ "Unknown pragma " ++ t
 
@@ -47,19 +65,19 @@ parsePragma bs = case dropPrefix bs of
         C.spaces
         dir <- C.parsecToken
         mns <- C.many (C.space *> C.spaces *> C.char '-' *> C.parsec)
-        return (PragmaExpandModules dir mns)
+        return $ FieldPragma $ PragmaExpandModules dir mns
 
     indent :: C.ParsecParser Pragma
     indent = do
         C.spaces
         n <- C.integral
-        return $ PragmaOptIndent n
+        return $ GlobalPragma $ PragmaOptIndent n
 
     fragment :: C.ParsecParser Pragma
     fragment = do
         C.spaces
         fn <- C.parsecToken
-        return (PragmaFragment fn)
+        return $ FieldPragma $ PragmaFragment fn
 
 stripWhitespace :: ByteString -> ByteString
 stripWhitespace bs = case BS.uncons bs of

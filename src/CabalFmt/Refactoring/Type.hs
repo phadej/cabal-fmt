@@ -4,12 +4,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes        #-}
 module CabalFmt.Refactoring.Type (
-    Refactoring,
-    Refactoring',
-    RefactoringOfField,
-    RefactoringOfField',
+    FieldRefactoring,
     CommentsPragmas,
-    traverseFields,
     rewriteFields,
     ) where
 
@@ -23,33 +19,19 @@ import CabalFmt.Pragma
 -- Refactoring type
 -------------------------------------------------------------------------------
 
-type CommentsPragmas = (Comments, [Pragma])
-type Refactoring             = forall r m. MonadCabalFmt r m => Refactoring' r m
-type Refactoring' r m        = [C.Field CommentsPragmas] -> m [C.Field CommentsPragmas]
-type RefactoringOfField      = forall r m. MonadCabalFmt r m => RefactoringOfField' r m
-type RefactoringOfField' r m = C.Name CommentsPragmas -> [C.FieldLine CommentsPragmas] -> m (C.Name CommentsPragmas, [C.FieldLine CommentsPragmas])
+type CommentsPragmas = (Comments, [FieldPragma])
+
+type FieldRefactoring
+    = forall r m. MonadCabalFmt r m
+    => (C.Field CommentsPragmas -> m (Maybe (C.Field CommentsPragmas)))
 
 -------------------------------------------------------------------------------
 -- Traversing refactoring
 -------------------------------------------------------------------------------
 
--- | Allows modification of single field 
---
--- E.g. sorting extensions *could* be done as refactoring,
--- though it's currently implemented in special pretty-printer.
-traverseFields
-    :: Applicative f
-    => RefactoringOfField' r f
-    -> [C.Field CommentsPragmas] -> f [C.Field CommentsPragmas]
-traverseFields f = goMany where
-    goMany = traverse go
-
-    go (C.Field name fls)       = uncurry C.Field <$> f name fls
-    go (C.Section name args fs) = C.Section name args <$> goMany fs
-
 -- | A top-to-bottom rewrite of sections and fields
 rewriteFields
-    :: Monad m
+    :: MonadCabalFmt r m
     => (C.Field CommentsPragmas -> m (Maybe (C.Field CommentsPragmas)))
     -> [C.Field CommentsPragmas] -> m [C.Field CommentsPragmas]
 rewriteFields f = goMany where

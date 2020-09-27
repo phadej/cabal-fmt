@@ -15,33 +15,31 @@ import CabalFmt.Monad
 import CabalFmt.Pragma
 import CabalFmt.Refactoring.Type
 
-refactoringExpandExposedModules :: Refactoring
-refactoringExpandExposedModules = traverseFields refact where
-    refact :: RefactoringOfField
-    refact name@(C.Name (_, pragmas) n) fls
-        | n == "exposed-modules" || n == "other-modules" = do
-            dirs <- parse pragmas
-            files <- traverseOf (traverse . _1) getFiles dirs
+refactoringExpandExposedModules :: FieldRefactoring
+refactoringExpandExposedModules C.Section {} = pure Nothing
+refactoringExpandExposedModules (C.Field name@(C.Name (_, pragmas) _n) fls) = do
+    dirs <- parse pragmas
+    files <- traverseOf (traverse . _1) getFiles dirs
 
-            let newModules :: [C.FieldLine CommentsPragmas]
-                newModules = catMaybes
-                    [ return $ C.FieldLine mempty $ toUTF8BS $ intercalate "." parts
-                    | (files', mns) <- files
-                    , file <- files'
-                    , let parts = splitDirectories $ dropExtension file
-                    , all C.validModuleComponent parts
-                    , let mn = C.fromComponents parts
-                    , mn `notElem` mns
-                    ]
+    let newModules :: [C.FieldLine CommentsPragmas]
+        newModules = catMaybes
+            [ return $ C.FieldLine mempty $ toUTF8BS $ intercalate "." parts
+            | (files', mns) <- files
+            , file <- files'
+            , let parts = splitDirectories $ dropExtension file
+            , all C.validModuleComponent parts
+            , let mn = C.fromComponents parts
+            , mn `notElem` mns
+            ]
 
-            pure (name, newModules ++ fls)
-        | otherwise = pure (name, fls)
+    pure $ case newModules of
+        [] -> Nothing
+        _  -> Just (C.Field name (newModules ++ fls))
 
-    parse :: MonadCabalFmt r m => [Pragma] -> m [(FilePath, [C.ModuleName])]
+  where
+    parse :: MonadCabalFmt r m => [FieldPragma] -> m [(FilePath, [C.ModuleName])]
     parse = fmap mconcat . traverse go where
         go (PragmaExpandModules fp mns) = return [ (fp, mns) ]
         go p = do
             displayWarning $ "Skipped pragma " ++ show p
             return []
-
-
