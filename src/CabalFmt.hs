@@ -9,8 +9,9 @@
 --
 module CabalFmt (cabalFmt) where
 
-import Control.Monad        (foldM, join)
+import Control.Monad        (join)
 import Control.Monad.Reader (asks, local)
+import Data.Either          (partitionEithers)
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C
@@ -53,16 +54,20 @@ cabalFmt filepath contents = do
 
     -- parse pragmas
     let parse c = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws *> return (c, ps)
-    inputFieldsP <- traverse (traverse parse) inputFieldsC
+    inputFieldsP' <- traverse (traverse parse) inputFieldsC
     endCommentsPragmas <- case parsePragmas endComments of
         (ws, ps) -> traverse_ displayWarning ws *> return ps
 
     -- apply refactorings
-    inputFieldsR  <- foldM (&) inputFieldsP refactorings
+    let inputFieldsP :: [C.Field CommentsPragmas]
+        inputFieldsP = map (fmap (fmap (snd . partitionPragmas))) inputFieldsP'
+
+    inputFieldsR  <- refactor inputFieldsP
 
     -- options morphisms
-    let pragmas :: [Pragma]
-        pragmas = foldMap (foldMap snd) inputFieldsR <> endCommentsPragmas
+    let pragmas :: [GlobalPragma]
+        pragmas = fst $ partitionPragmas $
+            foldMap (foldMap snd) inputFieldsP' <> endCommentsPragmas
 
         optsEndo :: OptionsMorphism
         optsEndo = foldMap pragmaToOM pragmas
@@ -92,16 +97,6 @@ cabalFmt filepath contents = do
 
 fromComments :: Comments -> [String]
 fromComments (Comments bss) = map C.fromUTF8BS bss
-
--------------------------------------------------------------------------------
--- Refactorings
--------------------------------------------------------------------------------
-
-refactorings :: MonadCabalFmt r m => [Refactoring' r m]
-refactorings =
-    [ refactoringFragments
-    , refactoringExpandExposedModules
-    ]
 
 -------------------------------------------------------------------------------
 -- Field prettyfying
@@ -169,8 +164,11 @@ ppConfVar (C.Impl c v)  = PP.text "impl" PP.<> PP.parens (C.pretty c PP.<+> C.pr
 -- Pragma to OM
 -------------------------------------------------------------------------------
 
-pragmaToOM :: Pragma -> OptionsMorphism
+partitionPragmas :: [Pragma] -> ([GlobalPragma], [FieldPragma])
+partitionPragmas = partitionEithers . map p where
+    p (GlobalPragma x) = Left x
+    p (FieldPragma x)  = Right x
+
+pragmaToOM :: GlobalPragma -> OptionsMorphism
 pragmaToOM (PragmaOptIndent n)    = mkOptionsMorphism $ \opts -> opts { optIndent = n }
 pragmaToOM (PragmaOptTabular b)   = mkOptionsMorphism $ \opts -> opts { optTabular = b }
-pragmaToOM PragmaExpandModules {} = mempty
-pragmaToOM PragmaFragment {}      = mempty
