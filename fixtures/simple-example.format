@@ -42,6 +42,16 @@ library
   hs-source-dirs:     src
   default-language:   Haskell2010
 
+  if impl(ghcjs)
+    cpp-options: -DFOOBAR
+
+  if impl(ghc)
+    -- cabal-fmt: glob-files cbits/**/*.c
+    c-sources:
+      cbits/source1.c
+      cbits/source2.c
+      cbits/sub/source3.c
+
 test-suite doctests
   type:             exitcode-stdio-1.0
   main-is:          doctests.hs

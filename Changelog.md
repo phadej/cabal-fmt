@@ -1,3 +1,10 @@
+# 0.1.5
+
+- Don't print redundant `-any` in `impl`
+- Add `glob-files` pragma for source file fields (`c-sources`, ...)
+  Glob syntax supports only stars (i.e. no `{}` etc. extras).
+- Source file fields are now sorted
+
 # 0.1.4
 
 - Add `-n` / `--no-cabal-file` to format cabal like, but not package files.

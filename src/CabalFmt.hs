@@ -28,6 +28,7 @@ import qualified Distribution.Types.ConfVar                   as C
 import qualified Distribution.Types.GenericPackageDescription as C
 import qualified Distribution.Types.PackageDescription        as C
 import qualified Distribution.Types.Version                   as C
+import qualified Distribution.Types.VersionRange              as C
 import qualified Text.PrettyPrint                             as PP
 
 import CabalFmt.Comments
@@ -35,6 +36,7 @@ import CabalFmt.Fields
 import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
 import CabalFmt.Fields.Modules
+import CabalFmt.Fields.SourceFiles
 import CabalFmt.Fields.TestedWith
 import CabalFmt.Monad
 import CabalFmt.Options
@@ -124,6 +126,7 @@ fieldDescrs opts
     <> exposedModulesF
     <> otherModulesF
     <> testedWithF opts
+    <> mconcat sourceFilesF
     <> coerceFieldDescrs C.packageDescriptionFieldGrammar
     <> coerceFieldDescrs C.buildInfoFieldGrammar
 
@@ -158,7 +161,9 @@ ppConfVar :: C.ConfVar -> PP.Doc
 ppConfVar (C.OS os)     = PP.text "os"   PP.<> PP.parens (C.pretty os)
 ppConfVar (C.Arch arch) = PP.text "arch" PP.<> PP.parens (C.pretty arch)
 ppConfVar (C.Flag name) = PP.text "flag" PP.<> PP.parens (C.pretty name)
-ppConfVar (C.Impl c v)  = PP.text "impl" PP.<> PP.parens (C.pretty c PP.<+> C.pretty v)
+ppConfVar (C.Impl c v)
+    | v == C.anyVersion = PP.text "impl" PP.<> PP.parens (C.pretty c)
+    | otherwise         = PP.text "impl" PP.<> PP.parens (C.pretty c PP.<+> C.pretty v)
 
 -------------------------------------------------------------------------------
 -- Pragma to OM

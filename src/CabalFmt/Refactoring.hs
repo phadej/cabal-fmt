@@ -1,5 +1,5 @@
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings #-}
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
@@ -8,12 +8,14 @@ module CabalFmt.Refactoring (
     refactor,
     ) where
 
-import qualified Distribution.Fields       as C
+import qualified Distribution.Fields as C
 
+import CabalFmt.Monad
 import CabalFmt.Refactoring.ExpandExposedModules
 import CabalFmt.Refactoring.Fragments
+import CabalFmt.Refactoring.GlobFiles
 import CabalFmt.Refactoring.Type
-import CabalFmt.Monad
+import CabalFmt.Fields.SourceFiles 
 
 -------------------------------------------------------------------------------
 -- Refactorings
@@ -27,6 +29,10 @@ refactor = rewriteFields rewrite
         | n == "exposed-modules" || n == "other-modules" = combine
             [ refactoringFragments
             , refactoringExpandExposedModules
+            ] f
+        | n `elem` fileFields = combine
+            [ refactoringFragments
+            , refactoringGlobFiles
             ] f
         | otherwise = combine
             [ refactoringFragments
