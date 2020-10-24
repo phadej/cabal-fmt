@@ -54,6 +54,10 @@ coerceFieldDescrs (F a) = F a
 instance Semigroup (FieldDescrs s a) where
     F a <> F b = F (a <> b)
 
+instance Monoid (FieldDescrs s a) where
+    mempty  = F Map.empty
+    mappend = (<>)
+
 instance Applicative (FieldDescrs s) where
     pure _  = F mempty
     f <*> x = F (mappend (runF f) (runF x))

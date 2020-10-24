@@ -71,6 +71,11 @@ files = Map.fromList
 
     , p "multiple.fragment"
         "build-depends: base\nghc-options: -Wall"
+
+    , p "cbits/header.h" "..."
+    , p "cbits/source1.c" "..."
+    , p "cbits/source2.c" "..."
+    , p "cbits/sub/source3.c" "..."
     ]
   where
     p x y = (x, BS8.pack y)

@@ -39,6 +39,10 @@ library
   if impl(ghcjs)
     cpp-options: -DFOOBAR
 
+  if impl(ghc)
+    -- cabal-fmt: glob-files cbits/**/*.c
+    c-sources:
+
 test-suite doctests
   type:                exitcode-stdio-1.0
   main-is:             doctests.hs

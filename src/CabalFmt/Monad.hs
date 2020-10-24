@@ -19,13 +19,16 @@ module CabalFmt.Monad (
     runCabalFmtIO,
     ) where
 
-import Control.Exception      (IOException, catch, throwIO, try, displayException)
+import Control.Exception
+       (IOException, catch, displayException, throwIO, try)
 import Control.Monad          (when)
 import Control.Monad.Except   (MonadError (..))
 import Control.Monad.IO.Class (MonadIO (..))
 import Control.Monad.Reader   (MonadReader (..), ReaderT (..), asks, runReaderT)
 import Control.Monad.Writer   (WriterT, runWriterT, tell)
 import Data.Bifunctor         (first)
+import Data.List              (isPrefixOf, stripPrefix)
+import Data.Maybe             (mapMaybe)
 import System.Exit            (exitFailure)
 import System.FilePath        ((</>))
 import System.IO              (hPutStrLn, stderr)
@@ -77,8 +80,17 @@ instance MonadReader Options CabalFmt where
     local f (CabalFmt m) = CabalFmt $ local (first f) m
 
 instance MonadCabalFmt Options CabalFmt where
-    listDirectory _      = return []
-    doesDirectoryExist _ = return False
+    listDirectory dir = CabalFmt $ do
+        files <- asks snd
+        return $ mapMaybe f (Map.keys files)
+      where
+        f :: FilePath -> Maybe FilePath
+        f fp = do
+            rest <- stripPrefix (dir ++ "/") fp
+            return $ takeWhile (/= '/') rest
+    doesDirectoryExist dir = CabalFmt $ do
+        files <- asks snd
+        return (any (isPrefixOf (dir ++ "/")) (Map.keys files))
     readFileBS p         = CabalFmt $ do
         files <- asks snd
         return (maybe (IOError "doesn't exist") Contents $ Map.lookup p files)

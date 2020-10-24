@@ -9,6 +9,7 @@ import qualified Distribution.Parsec.FieldLineStream as C
 
 import CabalFmt.Prelude
 import CabalFmt.Comments
+import CabalFmt.Glob
 
 -------------------------------------------------------------------------------
 -- Types
@@ -22,6 +23,7 @@ data Pragma
 -- | Pragmas applied per field
 data FieldPragma
     = PragmaExpandModules FilePath [C.ModuleName]
+    | PragmaGlobFiles Glob
     | PragmaFragment FilePath
   deriving (Show)
 
@@ -55,6 +57,7 @@ parsePragma bs = case dropPrefix bs of
         case t of
             "expand"     -> expandModules
             "indent"     -> indent
+            "glob-files" -> globFiles
             "tabular"    -> return $ GlobalPragma $ PragmaOptTabular True
             "no-tabular" -> return $ GlobalPragma $ PragmaOptTabular False
             "fragment"   -> fragment
@@ -78,6 +81,14 @@ parsePragma bs = case dropPrefix bs of
         C.spaces
         fn <- C.parsecToken
         return $ FieldPragma $ PragmaFragment fn
+
+    globFiles :: C.ParsecParser Pragma
+    globFiles = do
+        C.spaces
+        t <- C.parsecToken
+        case parseGlob t of
+            Right g -> return $ FieldPragma $ PragmaGlobFiles g
+            Left e  -> C.unexpected e
 
 stripWhitespace :: ByteString -> ByteString
 stripWhitespace bs = case BS.uncons bs of

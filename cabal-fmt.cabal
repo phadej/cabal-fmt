@@ -1,6 +1,6 @@
 cabal-version:      2.2
 name:               cabal-fmt
-version:            0.1.4
+version:            0.1.5
 synopsis:           Format .cabal files
 category:           Development
 description:
@@ -47,7 +47,9 @@ library cabal-fmt-internal
     CabalFmt.Fields.BuildDepends
     CabalFmt.Fields.Extensions
     CabalFmt.Fields.Modules
+    CabalFmt.Fields.SourceFiles
     CabalFmt.Fields.TestedWith
+    CabalFmt.Glob
     CabalFmt.Monad
     CabalFmt.Options
     CabalFmt.Parser
@@ -56,6 +58,7 @@ library cabal-fmt-internal
     CabalFmt.Refactoring
     CabalFmt.Refactoring.ExpandExposedModules
     CabalFmt.Refactoring.Fragments
+    CabalFmt.Refactoring.GlobFiles
     CabalFmt.Refactoring.Type
 
   other-extensions:

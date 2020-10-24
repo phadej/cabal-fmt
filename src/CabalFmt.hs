@@ -36,6 +36,7 @@ import CabalFmt.Fields
 import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
 import CabalFmt.Fields.Modules
+import CabalFmt.Fields.SourceFiles
 import CabalFmt.Fields.TestedWith
 import CabalFmt.Monad
 import CabalFmt.Options
@@ -125,6 +126,7 @@ fieldDescrs opts
     <> exposedModulesF
     <> otherModulesF
     <> testedWithF opts
+    <> mconcat sourceFilesF
     <> coerceFieldDescrs C.packageDescriptionFieldGrammar
     <> coerceFieldDescrs C.buildInfoFieldGrammar
 
