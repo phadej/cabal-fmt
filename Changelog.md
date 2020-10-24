@@ -1,3 +1,7 @@
+# 0.1.5
+
+- Don't print redundant `-any` in `impl`
+
 # 0.1.4
 
 - Add `-n` / `--no-cabal-file` to format cabal like, but not package files.
