@@ -1,3 +1,7 @@
+# 0.1.5.1
+
+- Fix bug in pretty printing empty version ranges.
+
 # 0.1.5
 
 - Don't print redundant `-any` in `impl`

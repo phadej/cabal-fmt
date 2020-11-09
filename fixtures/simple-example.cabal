@@ -43,6 +43,20 @@ library
     -- cabal-fmt: glob-files cbits/**/*.c
     c-sources:
 
+  -- empty interval
+  if impl(hugs)
+    build-depends: unbuildable <0
+    build-depends: unbuildable <0, unbuildable2 <0
+
+  -- full interval
+  build-depends: text <1 || >=1
+  build-depends: containers <1 || >=1, pretty <1 || >=1
+
+  -- only upper bound
+  build-depends: foo <1
+  build-depends: foo <2
+  build-depends: abc <1, def <1, ghj <2
+
 test-suite doctests
   type:                exitcode-stdio-1.0
   main-is:             doctests.hs
