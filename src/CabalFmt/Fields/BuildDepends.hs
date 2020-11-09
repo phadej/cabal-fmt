@@ -34,15 +34,19 @@ parse = unpack' (C.alaList C.CommaVCat) <$> C.parsec
 
 pretty :: Options -> [C.Dependency] -> PP.Doc
 pretty Options { optSpecVersion = v, optTabular = tab } deps = case deps of
-    [] -> PP.empty
+    []    -> PP.empty
     [dep] -> C.pretty (C.depPkgName dep) PP.<+> prettyVR vr'
       where
         vr' = either (C.fromVersionIntervals . C.mkVersionIntervals) id
             $ norm (C.asVersionIntervals $ C.depVerRange dep)
+
         prettyVR vr | vr == C.anyVersion = PP.empty
+                    | vr == C.noVersion  = PP.text "<0"
                     | otherwise          = C.pretty vr
+
     _ -> PP.vcat (zipWith pretty' (True : repeat False) deps')
       where
+        deps' :: [(String, [C.VersionInterval])]
         deps' = sortOn (map toLower . fst)
               $ map (C.unPackageName . C.depPkgName &&& C.asVersionIntervals . C.depVerRange)
               $ C.fromDepMap . C.toDepMap -- this combines duplicate packages
@@ -54,7 +58,8 @@ pretty Options { optSpecVersion = v, optTabular = tab } deps = case deps of
         -- we assume cabal-version: 2.2 or higher
         pretty' :: Bool -> (String, [C.VersionInterval]) -> PP.Doc
         pretty' isFirst (name, vis)
-            | empty vis = comma PP.<+> PP.text name
+            | empty vis = comma PP.<+> PP.text name PP.<+> PP.text "<0"
+            | full  vis = comma PP.<+> PP.text name
             | otherwise = case norm vis of
                 Left [] -> comma PP.<+> PP.text name
                 Left (vi : vis') ->
@@ -77,6 +82,9 @@ pretty Options { optSpecVersion = v, optTabular = tab } deps = case deps of
             prettyLowerBound lb PP.<> C.pretty l
         prettyVi (C.LowerBound l C.InclusiveBound, C.UpperBound u C.InclusiveBound)
             | l == u = PP.text "==" PP.<> C.pretty l
+        prettyVi (C.LowerBound l C.InclusiveBound, C.UpperBound u ub)
+            | l == C.version0
+            = prettyUpperBound ub PP.<> C.pretty u
         prettyVi (C.LowerBound l lb, C.UpperBound u ub) =
             prettyLowerBound lb PP.<> PP.text (lp width' l')
             PP.<+> PP.text "&&" PP.<+>
@@ -100,13 +108,17 @@ pretty Options { optSpecVersion = v, optTabular = tab } deps = case deps of
         prettyUpperBound C.InclusiveBound = PP.text "<="
         prettyUpperBound C.ExclusiveBound = PP.text "<"
   where
+    full :: [C.VersionInterval] -> Bool
+    full [(C.LowerBound l C.InclusiveBound, C.NoUpperBound)] = l == C.mkVersion [0]
+    full _                                                   = False
+
     empty :: [C.VersionInterval] -> Bool
-    empty []                                                  = True
-    empty [(C.LowerBound l C.InclusiveBound, C.NoUpperBound)] = l == C.mkVersion [0]
-    empty _                                                   = False
+    empty [] = True
+    empty _  = False
 
     norm :: [C.VersionInterval] -> Either [C.VersionInterval] C.VersionRange
-    norm []     = Right C.anyVersion
+    norm []                                                                    = Right C.noVersion
+    norm [(C.LowerBound l C.InclusiveBound, C.NoUpperBound)] | l == C.version0 = Right C.anyVersion
     norm (i:is) = maybe (Left $ i:is) Right $
         foldr1 C.unionVersionRanges <$> traverse f (i : is)
       where
