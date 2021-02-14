@@ -8,8 +8,8 @@ module CabalFmt.Fields.BuildDepends (
     ) where
 
 import qualified Distribution.CabalSpecVersion      as C
+import qualified Distribution.FieldGrammar          as C
 import qualified Distribution.Parsec                as C
-import qualified Distribution.Parsec.Newtypes       as C
 import qualified Distribution.Pretty                as C
 import qualified Distribution.Types.Dependency      as C
 import qualified Distribution.Types.DependencyMap   as C
@@ -19,9 +19,9 @@ import qualified Distribution.Types.VersionInterval as C
 import qualified Distribution.Types.VersionRange    as C
 import qualified Text.PrettyPrint                   as PP
 
-import CabalFmt.Prelude
 import CabalFmt.Fields
 import CabalFmt.Options
+import CabalFmt.Prelude
 
 setupDependsF :: Options -> FieldDescrs () ()
 setupDependsF opts = singletonF "setup-depends" (pretty opts) parse

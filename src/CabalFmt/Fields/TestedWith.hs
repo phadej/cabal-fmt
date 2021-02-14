@@ -12,7 +12,7 @@ import qualified Data.Set                      as Set
 import qualified Distribution.CabalSpecVersion as C
 import qualified Distribution.Compiler         as C
 import qualified Distribution.Parsec           as C
-import qualified Distribution.Parsec.Newtypes  as C
+import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Pretty           as C
 import qualified Distribution.Version          as C
 import qualified Text.PrettyPrint              as PP

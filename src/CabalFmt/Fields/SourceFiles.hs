@@ -9,11 +9,11 @@ module CabalFmt.Fields.SourceFiles (
 
 import System.FilePath.Posix (splitDirectories)
 
-import qualified Distribution.Fields          as C
-import qualified Distribution.Parsec          as C
-import qualified Distribution.Parsec.Newtypes as C
-import qualified Distribution.Pretty          as C
-import qualified Text.PrettyPrint             as PP
+import qualified Distribution.FieldGrammar as C
+import qualified Distribution.Fields       as C
+import qualified Distribution.Parsec       as C
+import qualified Distribution.Pretty       as C
+import qualified Text.PrettyPrint          as PP
 
 import CabalFmt.Fields
 import CabalFmt.Prelude
