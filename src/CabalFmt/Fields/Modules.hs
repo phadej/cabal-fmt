@@ -7,14 +7,14 @@ module CabalFmt.Fields.Modules (
     exposedModulesF,
     ) where
 
-import qualified Distribution.ModuleName      as C
-import qualified Distribution.Parsec          as C
-import qualified Distribution.Parsec.Newtypes as C
-import qualified Distribution.Pretty          as C
-import qualified Text.PrettyPrint             as PP
+import qualified Distribution.FieldGrammar as C
+import qualified Distribution.ModuleName   as C
+import qualified Distribution.Parsec       as C
+import qualified Distribution.Pretty       as C
+import qualified Text.PrettyPrint          as PP
 
-import CabalFmt.Prelude
 import CabalFmt.Fields
+import CabalFmt.Prelude
 
 exposedModulesF :: FieldDescrs () ()
 exposedModulesF = singletonF "exposed-modules" pretty parse

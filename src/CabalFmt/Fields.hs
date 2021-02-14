@@ -3,7 +3,10 @@
 -- Copyright: Oleg Grenrus
 {-# LANGUAGE DeriveFunctor             #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE RankNTypes                #-}
+{-# LANGUAGE UndecidableInstances      #-}
 module CabalFmt.Fields (
     FieldDescrs,
     fieldDescrLookup,
@@ -69,7 +72,7 @@ singletonF
     -> FieldDescrs s a
 singletonF fn f g = F $ Map.singleton fn (SP f g)
 
-instance C.FieldGrammar FieldDescrs where
+instance C.FieldGrammar PrettyParsec FieldDescrs where
     blurFieldGrammar _ (F m) = F m
 
     booleanFieldDef fn _ _def = singletonF fn f C.parsec where
@@ -109,3 +112,6 @@ instance C.FieldGrammar FieldDescrs where
     removedIn _ _ x        = x
     availableSince _ _     = id
     hiddenField _          = F mempty
+
+class (C.Pretty a, C.Parsec a) => PrettyParsec a
+instance (C.Pretty a, C.Parsec a) => PrettyParsec a
