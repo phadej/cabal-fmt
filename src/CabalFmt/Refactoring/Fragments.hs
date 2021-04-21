@@ -44,7 +44,7 @@ refactoringFragments field = do
                         displayWarning $ "Fragment " ++ p ++ " contains a section " ++ showSection name arg ++ ", expecting field " ++ show n ++ "."
                         pure Nothing
                     (C.Section name@(C.Name _ _) arg _, C.Field (C.Name _ n') _ : _) -> do
-                        displayWarning $ "Fragment " ++ p ++ " contains a field " ++ show n' ++ ", expection section " ++ showSection name arg ++ "."
+                        displayWarning $ "Fragment " ++ p ++ " contains a field " ++ show n' ++ ", expecting section " ++ showSection name arg ++ "."
                         pure Nothing
 
                     (C.Field name@(C.Name _ n) _, C.Field (C.Name _ n') fls' : rest) -> do
@@ -66,7 +66,7 @@ refactoringFragments field = do
                         then do
                             pure (Just (C.Section name arg (noCommentsPragmas fs')))
                         else do
-                            displayWarning $ "Fragment " ++ p ++ " contains a section " ++ showSection name arg ++ ", expection section " ++ showSection name' arg' ++ "."
+                            displayWarning $ "Fragment " ++ p ++ " contains a section " ++ showSection name arg ++ ", expecting section " ++ showSection name' arg' ++ "."
                             pure Nothing
   where
     noCommentsPragmas :: Functor f => [f ann] -> [f CommentsPragmas]
