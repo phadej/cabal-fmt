@@ -12,7 +12,7 @@ license:            GPL-3.0-or-later AND BSD-3-Clause
 license-file:       LICENSE
 author:             Oleg Grenrus <oleg.grenrus@iki.fi>
 maintainer:         Oleg Grenrus <oleg.grenrus@iki.fi>
-tested-with:        GHC ==8.4.4 || ==8.6.5 || ==8.8.4 || ==8.10.2
+tested-with:        GHC ==8.4.4 || ==8.6.5 || ==8.8.4 || ==8.10.4 || ==9.0.1
 extra-source-files:
   Changelog.md
   fixtures/*.cabal
@@ -28,7 +28,7 @@ library cabal-fmt-internal
 
   -- GHC boot libraries
   build-depends:
-    , base        ^>=4.11.1.0 || ^>=4.12.0.0 || ^>=4.13.0.0 || ^>=4.14.0.0
+    , base        ^>=4.11.1.0 || ^>=4.12.0.0 || ^>=4.13.0.0 || ^>=4.14.0.0 || ^>=4.15.0.0
     , bytestring  ^>=0.10.8.2
     , Cabal       ^>=3.4.0.0
     , containers  ^>=0.5.11.0 || ^>=0.6.0.1
