@@ -34,6 +34,7 @@ import CabalFmt.Comments
 import CabalFmt.Fields
 import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
+import CabalFmt.Fields.GhcOptions
 import CabalFmt.Fields.Modules
 import CabalFmt.Fields.SourceFiles
 import CabalFmt.Fields.TestedWith
@@ -123,6 +124,7 @@ fieldDescrs opts
     <> exposedModulesF
     <> otherModulesF
     <> testedWithF opts
+    <> ghcOptionsF
     <> mconcat sourceFilesF
     <> coerceFieldDescrs C.packageDescriptionFieldGrammar
     <> coerceFieldDescrs C.buildInfoFieldGrammar
