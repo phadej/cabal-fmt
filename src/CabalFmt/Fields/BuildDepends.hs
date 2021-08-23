@@ -2,6 +2,7 @@
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-deprecations #-}
 module CabalFmt.Fields.BuildDepends (
     buildDependsF,
     setupDependsF,
@@ -15,9 +16,11 @@ import qualified Distribution.Types.Dependency      as C
 import qualified Distribution.Types.DependencyMap   as C
 import qualified Distribution.Types.PackageName     as C
 import qualified Distribution.Types.Version         as C
-import qualified Distribution.Types.VersionInterval as C
+import qualified Distribution.Types.VersionInterval.Legacy as C
 import qualified Distribution.Types.VersionRange    as C
 import qualified Text.PrettyPrint                   as PP
+
+import qualified Distribution.Types.VersionInterval.Legacy as C ()
 
 import CabalFmt.Fields
 import CabalFmt.Options
