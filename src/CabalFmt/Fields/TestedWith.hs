@@ -11,15 +11,15 @@ import qualified Data.Map.Strict               as Map
 import qualified Data.Set                      as Set
 import qualified Distribution.CabalSpecVersion as C
 import qualified Distribution.Compiler         as C
+import qualified Distribution.FieldGrammar     as C
 import qualified Distribution.Parsec           as C
-import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Pretty           as C
 import qualified Distribution.Version          as C
 import qualified Text.PrettyPrint              as PP
 
-import CabalFmt.Prelude
 import CabalFmt.Fields
 import CabalFmt.Options
+import CabalFmt.Prelude
 
 testedWithF :: Options -> FieldDescrs () ()
 testedWithF Options { optSpecVersion = ver } = singletonF "tested-with" pretty parse where
@@ -56,7 +56,7 @@ leadingComma v xs = PP.vcat $ zipWith comma (True : repeat False) xs where
 isVersionSet :: C.VersionRange -> Maybe (Set C.Version)
 isVersionSet vr = go Set.empty (C.asVersionIntervals vr) where
     go !acc [] = Just acc
-    go acc ((C.LowerBound v C.InclusiveBound, C.UpperBound u C.InclusiveBound) : vis)
+    go acc (C.VersionInterval (C.LowerBound v C.InclusiveBound) (C.UpperBound u C.InclusiveBound) : vis)
         | v == u    = go (Set.insert v acc) vis
     go _ _ = Nothing
 

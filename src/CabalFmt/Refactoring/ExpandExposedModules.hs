@@ -3,6 +3,7 @@
 -- Copyright: Oleg Grenrus
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes        #-}
+{-# OPTIONS_GHC -Wno-deprecations #-}
 module CabalFmt.Refactoring.ExpandExposedModules (
     refactoringExpandExposedModules,
     ) where
@@ -28,7 +29,7 @@ refactoringExpandExposedModules (C.Field name@(C.Name (_, pragmas) _n) fls) = do
             , file <- files'
             , let parts = splitDirectories $ dropExtension file
             , all C.validModuleComponent parts
-            , let mn = C.fromComponents parts
+            , let mn = C.fromComponents parts -- TODO: don't use fromComponents
             , mn `notElem` mns
             ]
 
