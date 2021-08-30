@@ -1,3 +1,7 @@
+# 0.1.6
+
+- Format `build-tool-depends`
+
 # 0.1.5.1
 
 - Fix bug in pretty printing empty version ranges.

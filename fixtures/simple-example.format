@@ -73,6 +73,12 @@ library
     , def  <1
     , ghj  <2
 
+  -- build-tool-depends are formatted like build-depends
+  build-tool-depends: happy:happy
+  build-tool-depends:
+      alex:alex    >=1
+    , happy:happy  >=1
+
 test-suite doctests
   type:             exitcode-stdio-1.0
   main-is:          doctests.hs
