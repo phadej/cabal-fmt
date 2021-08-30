@@ -117,6 +117,7 @@ knownField fn fls = do
 fieldDescrs :: Options -> FieldDescrs () ()
 fieldDescrs opts
     =  buildDependsF opts
+    <> buildToolDependsF opts
     <> setupDependsF opts
     <> defaultExtensionsF
     <> otherExtensionsF
