@@ -4,7 +4,7 @@ import Data.List             (isInfixOf)
 import Data.List.NonEmpty    (NonEmpty (..))
 import System.FilePath.Posix (splitDirectories)
 
-import CabalFmt.Prelude
+import CabalFmt.Prelude hiding (splitDirectories)
 
 data Glob = Glob FilePath [GlobPiece]
   deriving Show

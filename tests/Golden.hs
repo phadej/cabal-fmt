@@ -50,7 +50,7 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
                         return (toUTF8BS $ unlines (map ("-- " ++) ws) ++ output')
 
     cmp a b | a == b    = return Nothing
-            | otherwise = Just <$> readProcess' "diff" ["-u", goldenPath, "-"] (fromUTF8BS b)
+            | otherwise = Just <$> readProcess' "diff" ["-u", "--strip-trailing-cr", goldenPath, "-"] (fromUTF8BS b)
 
     readProcess' proc args input = do
         (_, out, _) <- readProcessWithExitCode proc args input

@@ -16,7 +16,7 @@ import qualified Distribution.Pretty       as C
 import qualified Text.PrettyPrint          as PP
 
 import CabalFmt.Fields
-import CabalFmt.Prelude
+import CabalFmt.Prelude hiding (splitDirectories)
 
 sourceFilesF :: [FieldDescrs () ()]
 sourceFilesF =
