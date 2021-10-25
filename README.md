@@ -82,3 +82,7 @@ There are currently two options, both requiring `cabal-fmt` to be in your `$PATH
 
   - [`vim-cabalfmt`](https://github.com/sdiehl/vim-cabalfmt), a standalone plugin
   - [`neoformat`](https://github.com/sbdchd/neoformat), a general formatter with `cabal-fmt` support
+
+### vscode/codium
+
+You can install the [`vscode-cabal-fmt`](https://marketplace.visualstudio.com/items?itemName=berberman.vscode-cabal-fmt) extension. It needs `cabal-fmt` in your `$PATH`.
