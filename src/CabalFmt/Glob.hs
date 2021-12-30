@@ -1,8 +1,15 @@
+{-# LANGUAGE CPP #-}
+
 module CabalFmt.Glob where
 
 import Data.List             (isInfixOf)
 import Data.List.NonEmpty    (NonEmpty (..))
-import System.FilePath.Posix (splitDirectories)
+
+#ifdef mingw32_HOST_OS
+import System.FilePath.Windows (splitDirectories)
+#else
+import System.FilePath.Posix   (splitDirectories)
+#endif
 
 import CabalFmt.Prelude
 

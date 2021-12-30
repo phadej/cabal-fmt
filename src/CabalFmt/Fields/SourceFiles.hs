@@ -1,13 +1,19 @@
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
+
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
 module CabalFmt.Fields.SourceFiles (
     sourceFilesF,
     fileFields,
     ) where
 
-import System.FilePath.Posix (splitDirectories)
+#ifdef mingw32_HOST_OS
+import System.FilePath.Windows (splitDirectories)
+#else
+import System.FilePath.Posix   (splitDirectories)
+#endif
 
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields       as C
