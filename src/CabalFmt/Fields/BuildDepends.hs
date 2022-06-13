@@ -59,11 +59,14 @@ pretty opts deps = case deps of
       where
         deps' :: [(String, [C.VersionInterval])]
         deps' = sortOn (map toLower . fst)
-              $ map (C.unPackageName . C.depPkgName &&& C.asVersionIntervals . C.depVerRange)
+              $ map (prettyDepNoVersion &&& C.asVersionIntervals . C.depVerRange)
               $ C.fromDepMap . C.toDepMap -- this combines duplicate packages
               $ deps
 
-  where
+        prettyDepNoVersion :: C.Dependency -> String
+        prettyDepNoVersion (C.Dependency pkg _ libs) = 
+          C.prettyShow (C.Dependency pkg C.anyVersion libs)
+
 
 prettyExe :: Options -> [C.ExeDependency] -> PP.Doc
 prettyExe opts deps = case deps of

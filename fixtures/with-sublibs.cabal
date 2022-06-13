@@ -1,0 +1,12 @@
+cabal-version: 3.0
+name:          with-sublibs
+version:       1
+
+library
+  hs-source-dirs:     src
+  default-language:   Haskell2010
+  build-depends: 
+    main1, 
+    main1:sub, 
+    main3 >=1 && <3, 
+    main3:sub >=2 && <4
