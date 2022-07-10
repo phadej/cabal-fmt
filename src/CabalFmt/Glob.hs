@@ -2,7 +2,6 @@ module CabalFmt.Glob where
 
 import Data.List             (isInfixOf)
 import Data.List.NonEmpty    (NonEmpty (..))
-import System.FilePath.Posix (splitDirectories)
 
 import CabalFmt.Prelude
 

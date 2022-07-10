@@ -7,8 +7,6 @@ module CabalFmt.Fields.SourceFiles (
     fileFields,
     ) where
 
-import System.FilePath.Posix (splitDirectories)
-
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields       as C
 import qualified Distribution.Parsec       as C
