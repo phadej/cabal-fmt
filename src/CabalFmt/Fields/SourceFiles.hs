@@ -7,7 +7,9 @@ module CabalFmt.Fields.SourceFiles (
     fileFields,
     ) where
 
-import System.FilePath.Posix (splitDirectories)
+-- Make sure we explicitly use Posix's splitDirectories
+-- when parsing glob syntax since only `/` is valid, and not '\\'
+import qualified System.FilePath.Posix     as Posix (splitDirectories)
 
 import qualified Distribution.FieldGrammar as C
 import qualified Distribution.Fields       as C
@@ -46,7 +48,7 @@ pretty :: [FilePath] -> PP.Doc
 pretty
     = PP.vcat . map C.showFilePath
     . nub
-    . sortBy (cmp `on` map strToLower . splitDirectories)
+    . sortBy (cmp `on` map strToLower . Posix.splitDirectories)
   where
     cmp a b = case dropCommonPrefix a b of
         ([], [])  -> EQ
