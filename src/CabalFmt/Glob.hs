@@ -1,8 +1,10 @@
 module CabalFmt.Glob where
 
-import Data.List             (isInfixOf)
-import Data.List.NonEmpty    (NonEmpty (..))
-import System.FilePath.Posix (splitDirectories)
+import Data.List          (isInfixOf)
+import Data.List.NonEmpty (NonEmpty (..))
+
+import qualified System.FilePath       as Native (splitDirectories)
+import qualified System.FilePath.Posix as Posix (splitDirectories)
 
 import CabalFmt.Prelude
 
@@ -27,7 +29,7 @@ data GlobChar
 -- [False,False,True,True]
 --
 match :: Glob -> FilePath -> Bool
-match (Glob g1 gs0) fp = go0 (splitDirectories fp) where
+match (Glob g1 gs0) fp = go0 (Native.splitDirectories fp) where
     go0 []     = False
     go0 (p:ps) = if p == g1 then go ps gs0 else False
 
@@ -38,7 +40,6 @@ match (Glob g1 gs0) fp = go0 (splitDirectories fp) where
     go (s:ss) (GlobStarStar : gs) = go (s:ss) gs || go ss (GlobStarStar : gs)
     go (s:ss) (GlobPiece cs : gs) = matches s (toList cs) && go ss gs
 
-
     matches :: FilePath -> [GlobChar] -> Bool
     matches []     []                = True
     matches (_:_)  []                = False
@@ -47,7 +48,7 @@ match (Glob g1 gs0) fp = go0 (splitDirectories fp) where
     matches (x:xs) (GlobChar c : cs) = if x == c then matches xs cs else False
 
 parseGlob :: String -> Either String Glob
-parseGlob input = case splitDirectories input of
+parseGlob input = case Posix.splitDirectories input of
     []     -> Left "empty path"
     (x:xs) -> do
         p <- parseFirstPiece x

@@ -109,5 +109,6 @@ test-suite golden
     , process
     , tasty
     , tasty-golden
+    , temporary
 
 -- end file comment

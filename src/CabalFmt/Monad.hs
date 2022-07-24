@@ -30,7 +30,7 @@ import Data.Bifunctor         (first)
 import Data.List              (isPrefixOf, stripPrefix)
 import Data.Maybe             (mapMaybe)
 import System.Exit            (exitFailure)
-import System.FilePath        ((</>))
+import System.FilePath        (pathSeparator, (</>))
 import System.IO              (hPutStrLn, stderr)
 
 import qualified Data.ByteString  as BS
@@ -86,14 +86,17 @@ instance MonadCabalFmt Options CabalFmt where
       where
         f :: FilePath -> Maybe FilePath
         f fp = do
-            rest <- stripPrefix (dir ++ "/") fp
-            return $ takeWhile (/= '/') rest
+            rest <- stripPrefix (dir ++ [pathSeparator]) fp
+            return $ takeWhile (/= pathSeparator) rest
+
     doesDirectoryExist dir = CabalFmt $ do
         files <- asks snd
-        return (any (isPrefixOf (dir ++ "/")) (Map.keys files))
+        return (any (isPrefixOf (dir ++ [pathSeparator])) (Map.keys files))
+
     readFileBS p         = CabalFmt $ do
         files <- asks snd
         return (maybe (IOError "doesn't exist") Contents $ Map.lookup p files)
+
     displayWarning w     = do
         werror <- asks optError
         if werror

@@ -1,6 +1,8 @@
 module Main (main) where
 
 import System.FilePath            ((-<.>), (</>))
+import System.IO                  (hClose, hFlush)
+import System.IO.Temp             (withSystemTempFile)
 import System.Process             (readProcessWithExitCode)
 import Test.Tasty                 (TestTree, defaultMain, testGroup)
 import Test.Tasty.Golden.Advanced (goldenTest)
@@ -10,9 +12,9 @@ import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Map              as Map
 
 import CabalFmt         (cabalFmt)
-import CabalFmt.Prelude
 import CabalFmt.Monad   (runCabalFmt)
 import CabalFmt.Options (defaultOptions)
+import CabalFmt.Prelude
 
 main :: IO ()
 main = defaultMain $ testGroup "tests"
@@ -50,7 +52,22 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
                         return (toUTF8BS $ unlines (map ("-- " ++) ws) ++ output')
 
     cmp a b | a == b    = return Nothing
-            | otherwise = Just <$> readProcess' "diff" ["-u", goldenPath, "-"] (fromUTF8BS b)
+            | otherwise =
+        withSystemTempFile "cabal-fmt-test.txt" $ \fpA hdlA ->
+        withSystemTempFile "cabal-fmt-test.txt" $ \fpB hdlB -> do
+            BS.hPutStr hdlA a
+            BS.hPutStr hdlB b
+            hFlush hdlA
+            hFlush hdlB
+            hClose hdlA
+            hClose hdlB
+
+            Just . postProcess <$> readProcess' "diff" ["-u", fpA, fpB] ""
+
+    postProcess :: String -> String
+    postProcess = unlines . (["======"] ++) . map (concatMap char) . (++ ["======"]). lines where
+        char '\r' = "{CR}"
+        char c    = [c]
 
     readProcess' proc args input = do
         (_, out, _) <- readProcessWithExitCode proc args input
@@ -72,10 +89,10 @@ files = Map.fromList
     , p "multiple.fragment"
         "build-depends: base\nghc-options: -Wall"
 
-    , p "cbits/header.h" "..."
-    , p "cbits/source1.c" "..."
-    , p "cbits/source2.c" "..."
-    , p "cbits/sub/source3.c" "..."
+    , p ("cbits" </> "header.h") "..."
+    , p ("cbits" </> "source1.c") "..."
+    , p ("cbits" </> "source2.c") "..."
+    , p ("cbits" </> "sub" </> "source3.c") "..."
     ]
   where
     p x y = (x, BS8.pack y)

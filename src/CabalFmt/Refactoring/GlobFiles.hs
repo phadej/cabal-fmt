@@ -7,12 +7,14 @@ module CabalFmt.Refactoring.GlobFiles (
     refactoringGlobFiles,
 ) where
 
-import qualified Distribution.Fields     as C
+import qualified Distribution.Fields   as C
+import qualified System.FilePath       as Native
+import qualified System.FilePath.Posix as Posix
 
-import CabalFmt.Prelude
-import CabalFmt.Monad
 import CabalFmt.Glob
+import CabalFmt.Monad
 import CabalFmt.Pragma
+import CabalFmt.Prelude
 import CabalFmt.Refactoring.Type
 
 refactoringGlobFiles :: FieldRefactoring
@@ -41,5 +43,8 @@ refactoringGlobFiles (C.Field name@(C.Name (_, pragmas) _n) fls) = do
 
     match' :: MonadCabalFmt r m => Glob -> m [FilePath]
     match' g@(Glob dir _) = do
-        files <- map (\fp -> dir ++ "/" ++ fp) <$> getFiles dir 
-        return $ filter (match g) files
+        files <- map (\fp -> dir Native.</> fp) <$> getFiles dir
+        return $ map toPosix $ filter (match g) files
+
+    toPosix :: FilePath -> FilePath
+    toPosix = Posix.joinPath . Native.splitDirectories
