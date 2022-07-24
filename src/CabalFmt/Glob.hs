@@ -1,9 +1,9 @@
 module CabalFmt.Glob where
 
-import Data.List             (isInfixOf)
-import Data.List.NonEmpty    (NonEmpty (..))
--- Make sure we explicitly use Posix's splitDirectories
--- when parsing glob syntax since only `/` is valid, and not '\\'
+import Data.List          (isInfixOf)
+import Data.List.NonEmpty (NonEmpty (..))
+
+import qualified System.FilePath       as Native (splitDirectories)
 import qualified System.FilePath.Posix as Posix (splitDirectories)
 
 import CabalFmt.Prelude
@@ -29,7 +29,7 @@ data GlobChar
 -- [False,False,True,True]
 --
 match :: Glob -> FilePath -> Bool
-match (Glob g1 gs0) fp = go0 (Posix.splitDirectories fp) where
+match (Glob g1 gs0) fp = go0 (Native.splitDirectories fp) where
     go0 []     = False
     go0 (p:ps) = if p == g1 then go ps gs0 else False
 
@@ -39,7 +39,6 @@ match (Glob g1 gs0) fp = go0 (Posix.splitDirectories fp) where
     go (_:_)  []                  = False
     go (s:ss) (GlobStarStar : gs) = go (s:ss) gs || go ss (GlobStarStar : gs)
     go (s:ss) (GlobPiece cs : gs) = matches s (toList cs) && go ss gs
-
 
     matches :: FilePath -> [GlobChar] -> Bool
     matches []     []                = True
