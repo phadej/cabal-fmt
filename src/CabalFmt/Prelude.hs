@@ -60,7 +60,7 @@ import Distribution.Compat.Lens    (over, view)
 import Distribution.Compat.Newtype (pack', unpack')
 import System.FilePath             (dropExtension, splitDirectories)
 
-import qualified Distribution.Simple.Utils as C
+import qualified Distribution.Utils.Generic as C
 
 traverseOf
     :: Applicative f

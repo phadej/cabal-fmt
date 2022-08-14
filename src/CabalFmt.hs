@@ -22,12 +22,12 @@ import qualified Distribution.Fields.Pretty                   as C
 import qualified Distribution.PackageDescription.FieldGrammar as C
 import qualified Distribution.Parsec                          as C
 import qualified Distribution.Pretty                          as C
-import qualified Distribution.Simple.Utils                    as C
 import qualified Distribution.Types.Condition                 as C
 import qualified Distribution.Types.ConfVar                   as C
 import qualified Distribution.Types.GenericPackageDescription as C
 import qualified Distribution.Types.PackageDescription        as C
 import qualified Distribution.Types.VersionRange              as C
+import qualified Distribution.Utils.Generic                   as C
 import qualified Text.PrettyPrint                             as PP
 
 import CabalFmt.Comments
@@ -94,8 +94,9 @@ cabalFmt filepath contents = do
             & if nullComments endComments then id else
                 (++ unlines ("" : [ C.fromUTF8BS c | c <- unComments endComments ]))
 
-fromComments :: Comments -> [String]
-fromComments (Comments bss) = map C.fromUTF8BS bss
+fromComments :: Comments -> C.CommentPosition
+fromComments (Comments [])  = C.NoComment
+fromComments (Comments bss) = C.CommentBefore (map C.fromUTF8BS bss)
 
 -------------------------------------------------------------------------------
 -- Field prettyfying
