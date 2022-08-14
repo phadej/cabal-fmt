@@ -12,8 +12,8 @@ import Text.Parsec.Error  (ParseError)
 import qualified Data.ByteString            as BS
 import qualified Data.ByteString.Char8      as BS8
 import qualified Distribution.Parsec        as C
-import qualified Distribution.Simple.Utils  as C (fromUTF8BS)
 import qualified Distribution.Types.Version as C
+import qualified Distribution.Utils.Generic as C (fromUTF8BS)
 
 data Error
     = SomeError String

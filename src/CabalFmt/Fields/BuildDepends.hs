@@ -16,7 +16,6 @@ import qualified Distribution.Pretty                       as C
 import qualified Distribution.Types.Dependency             as C
 import qualified Distribution.Types.DependencyMap          as C
 import qualified Distribution.Types.ExeDependency          as C
-import qualified Distribution.Types.PackageName            as C
 import qualified Distribution.Types.Version                as C
 import qualified Distribution.Types.VersionInterval.Legacy as C
 import qualified Distribution.Types.VersionRange           as C
