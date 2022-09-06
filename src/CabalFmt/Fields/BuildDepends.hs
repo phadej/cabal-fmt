@@ -84,7 +84,7 @@ prettyExe opts deps = case deps of
         deps' :: [(String, [C.VersionInterval])]
         deps' = sortOn (map toLower . fst)
               $ map (exeDepExeName &&& C.asVersionIntervals . exeDepVerRange)
-              -- $ C.fromDepMap . C.toDepMap -- this combines duplicate packages
+              -- C.fromDepMap . C.toDepMap -- this combines duplicate packages
               $ deps
 
 exeDepExeName :: C.ExeDependency -> String
