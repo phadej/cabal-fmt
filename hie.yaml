@@ -1,0 +1,12 @@
+cradle:
+  cabal:
+  - component: "cabal-fmt:exe:cabal-fmt"
+    path: ./cli
+  - component: "cabal-fmt:lib:version-interval"
+    path: "./src-interval"
+  - component: "cabal-fmt:lib:cabal-fmt-internal"
+    path: ./src
+  - component: "cabal-fmt:test:golden"
+    path: ./tests
+  - component: "cabal-fmt:test:version-interval-tests"
+    path: "./tests-interval"
