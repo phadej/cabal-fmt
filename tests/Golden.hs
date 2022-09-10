@@ -20,6 +20,7 @@ main :: IO ()
 main = defaultMain $ testGroup "tests"
     [ goldenTest' "cabal-fmt"
     , goldenTest' "Cabal"
+    , goldenTest' "Cabal-notab"
     , goldenTest' "simple-example"
 
     , goldenTest' "fragment-missing"
