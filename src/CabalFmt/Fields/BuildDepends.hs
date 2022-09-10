@@ -9,6 +9,8 @@ module CabalFmt.Fields.BuildDepends (
     buildToolDependsF,
 ) where
 
+import Data.List (dropWhileEnd)
+
 import qualified Distribution.CabalSpecVersion             as C
 import qualified Distribution.FieldGrammar                 as C
 import qualified Distribution.Parsec                       as C
@@ -95,80 +97,84 @@ exeDepVerRange :: C.ExeDependency -> C.VersionRange
 exeDepVerRange (C.ExeDependency _ _ vr) = vr
 
 prettyMany :: Options -> [(String, [C.VersionInterval])] -> PP.Doc
-prettyMany opts@Options { optSpecVersion = v, optTabular = tab } deps' =
-    PP.vcat (zipWith pretty' (True : repeat False) deps')
+prettyMany opts@Options { optSpecVersion = v, optTabular = tab } deps'
+    = PP.vcat
+    $ map PP.text
+    $ tbl
+    $ zipWith cols (True : repeat False) deps'
   where
-    width = maximum (0 : map (length . fst) deps') + 1
-    width' = maximum (0 : map (firstComponent . snd) deps')
-
-    -- we assume cabal-version: 2.2 or higher
-    pretty' :: Bool -> (String, [C.VersionInterval]) -> PP.Doc
-    pretty' isFirst (name, vis)
-        | empty vis = comma PP.<+> PP.text name PP.<+> PP.text "<0"
-        | full  vis = comma PP.<+> PP.text name
+    cols :: Bool -> (String, [C.VersionInterval]) -> [String]
+    cols isFirst (name, vis)
+        | full  vis = [comma, name]
         | otherwise = case norm opts vis of
-            Left [] -> comma PP.<+> PP.text name
-            Left (vi : vis') ->
-                comma PP.<+>
-                PP.text (lp width name) PP.<+>
-                PP.hsep
-                    ( prettyVi vi
-                    : map (\vi' -> PP.text "||" PP.<+> prettyVi' vi') vis'
-                    )
-            Right vr ->
-                comma PP.<+>
-                PP.text (lp width name) PP.<+>
-                C.pretty vr
+            Left []          -> [ comma, name, "", "<0"] -- empty
+            Left (vi : vis') -> [ comma, name, "" ] ++ prettyVi vi ++ concat [ "||" : prettyVi vi' | vi' <- vis' ]
+            Right vr         -> comma : name : "" : words (C.prettyShow vr)
       where
-        comma | isFirst, v < C.CabalSpecV2_2 = PP.text " "
-              | otherwise = PP.comma
+        comma | isFirst, v < C.CabalSpecV2_2 = " "
+              | otherwise                    = ","
 
     full :: [C.VersionInterval] -> Bool
-    full [(C.LowerBound l C.InclusiveBound, C.NoUpperBound)] = l == C.mkVersion [0]
+    full [(C.LowerBound l C.InclusiveBound, C.NoUpperBound)] = l == C.version0
     full _                                                   = False
 
-    empty :: [C.VersionInterval] -> Bool
-    empty [] = True
-    empty _  = False
+    tbl :: [[String]] -> [String]
+    tbl = if tab then table else map (concatSpaces . unwords)
 
-    lp | tab       = leftpad
-       | otherwise = \_ x -> x
-
-    -- indent first
+    prettyVi :: (C.LowerBound, C.UpperBound) -> [String]
     prettyVi (C.LowerBound l lb, C.NoUpperBound) =
-        prettyLowerBound lb PP.<> C.pretty l
+        [ prettyLowerBound lb ++ C.prettyShow l ]
     prettyVi (C.LowerBound l C.InclusiveBound, C.UpperBound u C.InclusiveBound)
-        | l == u = PP.text "==" PP.<> C.pretty l
+        | l == u
+        =  [ "==" ++ C.prettyShow l ]
     prettyVi (C.LowerBound l C.InclusiveBound, C.UpperBound u ub)
         | l == C.version0
-        = prettyUpperBound ub PP.<> C.pretty u
+        = [ prettyUpperBound ub ++ C.prettyShow u ]
     prettyVi (C.LowerBound l lb, C.UpperBound u ub) =
-        prettyLowerBound lb PP.<> PP.text (lp width' l')
-        PP.<+> PP.text "&&" PP.<+>
-        prettyUpperBound ub PP.<> C.pretty u
-      where
-        l' = C.prettyShow l
+        [ prettyLowerBound lb ++ C.prettyShow l
+        , "&&"
+        , prettyUpperBound ub ++  C.prettyShow u
+        ]
 
-    prettyVi' (C.LowerBound l lb, C.NoUpperBound) =
-        prettyLowerBound lb PP.<> C.pretty l
-    prettyVi' (C.LowerBound l C.InclusiveBound, C.UpperBound u C.InclusiveBound)
-        | l == u = PP.text "==" PP.<> C.pretty l
-    prettyVi' (C.LowerBound l lb, C.UpperBound u ub) =
-        prettyLowerBound lb PP.<> C.pretty l PP.<+> PP.text "&&" PP.<+>
-        prettyUpperBound ub PP.<> C.pretty u
+    prettyLowerBound :: C.Bound -> String
+    prettyLowerBound C.InclusiveBound = ">="
+    prettyLowerBound C.ExclusiveBound = ">"
 
+    prettyUpperBound :: C.Bound -> String
+    prettyUpperBound C.InclusiveBound = "<="
+    prettyUpperBound C.ExclusiveBound = "<"
 
-    prettyLowerBound :: C.Bound -> PP.Doc
-    prettyLowerBound C.InclusiveBound = PP.text ">="
-    prettyLowerBound C.ExclusiveBound = PP.text ">"
+-- returns rows.
+table :: [[String]] -> [String]
+table cells = map strip rows
+  where
+    cols      :: Int
+    rowWidths :: [Int]
+    rows      :: [String]
 
-    prettyUpperBound :: C.Bound -> PP.Doc
-    prettyUpperBound C.InclusiveBound = PP.text "<="
-    prettyUpperBound C.ExclusiveBound = PP.text "<"
+    (cols, rowWidths, rows) = foldr go (0, repeat 0, []) cells
 
-    firstComponent :: [C.VersionInterval] -> Int
-    firstComponent [] = 0
-    firstComponent ((C.LowerBound l _, _) : _) = length (C.prettyShow l)
+    go :: [String] -> (Int, [Int], [String]) -> (Int, [Int], [String])
+    go xs (c, w, yss) =
+        ( max c (length xs)
+        , zipWith max w (map length xs ++ repeat 0)
+        , unwords (take cols (zipWith fill xs rowWidths))
+          : yss
+        )
+
+    fill :: String -> Int -> String
+    fill s n = s ++ replicate (n - length s) ' '
+
+strip :: String -> String
+strip = dropWhileEnd (' ' ==)
+
+concatSpaces :: String -> String
+concatSpaces []        = []
+concatSpaces (' ' : s) = ' ' : concatSpaces s
+concatSpaces (c0 : s0)   = c0 : go s0 where
+    go (' ' : ' ' : s) = go (' ' : s)
+    go (c:s)           = c : go s
+    go []              = []
 
 norm :: Options -> [C.VersionInterval] -> Either [C.VersionInterval] C.VersionRange
 norm _ []                                                                    = Right C.noVersion
@@ -181,6 +187,3 @@ norm Options { optSpecVersion = v } (i:is) = maybe (Left $ i:is) Right $
         | v >= C.CabalSpecV2_0, u == C.majorUpperBound l =
             Just (C.majorBoundVersion l)
     f _ = Nothing
-
-leftpad :: Int -> String -> String
-leftpad w s = s ++ replicate (w - length s) ' '

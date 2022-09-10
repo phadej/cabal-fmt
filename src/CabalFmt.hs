@@ -11,7 +11,6 @@ module CabalFmt (cabalFmt) where
 
 import Control.Monad        (join)
 import Control.Monad.Reader (asks, local)
-import Data.Either          (partitionEithers)
 
 import qualified Data.ByteString                              as BS
 import qualified Distribution.CabalSpecVersion                as C

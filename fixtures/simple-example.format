@@ -56,8 +56,8 @@ library
   if impl(hugs)
     build-depends: unbuildable <0
     build-depends:
-        unbuildable <0
-      , unbuildable2 <0
+        unbuildable   <0
+      , unbuildable2  <0
 
   -- full interval
   build-depends:      text

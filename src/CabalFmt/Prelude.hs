@@ -15,7 +15,7 @@ module CabalFmt.Prelude (
     -- * Data.Either
     partitionEithers,
     -- * Data.Foldable
-    toList, traverse_, asum,
+    toList, traverse_, asum, for_,
     -- * Data.Function
     on, (&),
     -- * Data.List
@@ -51,7 +51,7 @@ import Data.Bifunctor              (bimap)
 import Data.ByteString             (ByteString)
 import Data.Char                   (toLower)
 import Data.Either                 (partitionEithers)
-import Data.Foldable               (asum, toList, traverse_)
+import Data.Foldable               (asum, for_, toList, traverse_)
 import Data.Function               (on, (&))
 import Data.List                   (intercalate, nub, sortBy, sortOn)
 import Data.Maybe                  (catMaybes, fromMaybe, isJust, isNothing)
