@@ -1,0 +1,190 @@
+cabal-version:      2.2
+name:               tree-diff
+version:            0.2.2
+synopsis:           Diffing of (expression) trees.
+category:           Data, Testing
+description:
+  Common diff algorithm works on list structures:
+  .
+  @
+  diff :: Eq a => [a] -> [a] -> [Edit a]
+  @
+  .
+  This package works on trees.
+  .
+  @
+  treeDiff :: Eq a => Tree a -> Tree a -> Edit (EditTree a)
+  @
+  .
+  This package also provides a way to diff arbitrary ADTs,
+  using @Generics@-derivable helpers.
+  .
+  This package differs from <http://hackage.haskell.org/package/gdiff gdiff>,
+  in a two ways: @tree-diff@ doesn't have patch function,
+  and the "edit-script" is a tree itself, which is useful for pretty-printing.
+  .
+  @
+  >>> prettyEditExpr $ ediff (Foo 42 [True, False] "old") (Foo 42 [False, False, True] "new")
+  Foo
+  \  {fooBool = [-True, +False, False, +True],
+  \   fooInt = 42,
+  \   fooString = -"old" +"new"}
+  @
+
+homepage:           https://github.com/phadej/tree-diff
+bug-reports:        https://github.com/phadej/tree-diff/issues
+license:            GPL-2.0-or-later
+license-file:       LICENSE
+author:             Oleg Grenrus <oleg.grenrus@iki.fi>
+maintainer:         Oleg.Grenrus <oleg.grenrus@iki.fi>
+copyright:          (c) 2017-2021 Oleg Grenrus
+build-type:         Simple
+extra-source-files:
+  ChangeLog.md
+  README.md
+
+tested-with:
+    GHC ==7.4.2
+     || ==7.6.3
+     || ==7.8.4
+     || ==7.10.3
+     || ==8.0.2
+     || ==8.2.2
+     || ==8.4.4
+     || ==8.6.5
+     || ==8.8.4
+     || ==8.10.4
+     || ==9.0.2
+     || ==9.2.4
+     || ==9.4.1
+  , GHCJS ==8.4
+
+extra-source-files:
+  fixtures/exfoo.expr
+  fixtures/MyInt1.expr
+  fixtures/MyInt2.expr
+  fixtures/MyInt3.expr
+  fixtures/Positional.expr
+
+source-repository head
+  type:     git
+  location: https://github.com/phadej/tree-diff.git
+
+library
+  exposed-modules:
+    Data.TreeDiff
+    Data.TreeDiff.Class
+    Data.TreeDiff.Expr
+    Data.TreeDiff.Golden
+    Data.TreeDiff.List
+    Data.TreeDiff.OMap
+    Data.TreeDiff.Parser
+    Data.TreeDiff.Pretty
+    Data.TreeDiff.QuickCheck
+    Data.TreeDiff.Tree
+
+  -- GHC boot libraries
+  build-depends:
+    , base        >=4.5      && <4.18
+    , bytestring  ^>=0.9.2.1 || ^>=0.10.0.2 || ^>=0.11.0.0
+    , containers  ^>=0.4.2.1 || ^>=0.5.0.0 || ^>=0.6.0.1
+    , deepseq     ^>=1.3.0.0 || ^>=1.4.0.0
+    , parsec      ^>=3.1.13.0
+    , pretty      ^>=1.1.1.0
+    , text        ^>=1.2.3.0 || ^>=2.0
+    , time        ^>=1.4      || ^>=1.5.0.1  || ^>=1.6.0.1  || ^>=1.8.0.2 || >=1.9.3 && <1.13
+
+  build-depends:
+    , aeson                 ^>=1.4.6.0 || ^>=1.5.6.0 || ^>=2.0.0.0 || ^>=2.1.0.0
+    , ansi-terminal         >=0.10       && <0.12
+    , ansi-wl-pprint        ^>=0.6.8.2
+    , base-compat           ^>=0.10.5 || ^>=0.11.0 || ^>=0.12.0
+    , bytestring-builder    ^>=0.10.8.2.0
+    , hashable              ^>=1.2.7.0 || ^>=1.3.0.0 || ^>=1.4.0.1
+    , parsers               ^>=0.12.10
+    , primitive             ^>=0.7.1.0
+    , QuickCheck            ^>=2.14.2
+    , scientific            ^>=0.3.6.2
+    , semialign             ^>=1.2.0.1
+    , strict                ^>=0.4.0.1
+    , tagged                ^>=0.8.6
+    , these                 ^>=1.1.1.1
+    , unordered-containers  ^>=0.2.8.0
+    , uuid-types            ^>=1.0.3
+    , vector                ^>=0.12.0.0 || ^>=0.13.0.0
+
+  if impl(ghc <7.5)
+    build-depends: ghc-prim
+
+  if !impl(ghc >=8.0)
+    build-depends: semigroups >=0.19.1 && <0.21
+
+  if !impl(ghc >=7.8)
+    build-depends: generic-deriving >=1.13.1 && <1.15
+
+  if !impl(ghc >=7.10)
+    build-depends:
+      , nats          ^>=1.1.2
+      , transformers  ^>=0.3.0.0 || ^>=0.4.2.0 || ^>=0.5.2.0
+      , void          ^>=0.7.3
+
+  other-extensions:
+    CPP
+    ConstraintKinds
+    DefaultSignatures
+    FlexibleContexts
+    GADTs
+    RankNTypes
+    ScopedTypeVariables
+    TypeOperators
+
+  hs-source-dirs:   src
+  default-language: Haskell2010
+
+test-suite tree-diff-test
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          Tests.hs
+  hs-source-dirs:   tests src-diff
+  ghc-options:      -Wall -threaded
+  other-modules:    RefDiffBy
+
+  -- dependencies from library
+  build-depends:
+    , ansi-terminal
+    , ansi-wl-pprint
+    , base
+    , base-compat
+    , parsec
+    , primitive
+    , QuickCheck
+    , tagged
+    , tree-diff
+
+  if impl(ghc <7.5)
+    build-depends: ghc-prim
+
+  -- extra dependencies
+  build-depends:
+    , tasty             ^>=1.2 || ^>=1.3.1 || ^>=1.4.2
+    , tasty-golden      ^>=2.3.1.1
+    , tasty-quickcheck  ^>=0.10.1
+    , trifecta          >=2       && <2.2
+
+benchmark tree-diff-bench
+  default-language: Haskell2010
+  type:             exitcode-stdio-1.0
+  main-is:          tree-diff-bench.hs
+  hs-source-dirs:   bench
+  ghc-options:      -Wall -threaded
+
+  -- dependencies from library
+  build-depends:
+    , base
+    , deepseq
+    , tree-diff
+
+  -- extra dependencies
+  build-depends:
+    , criterion  ^>=1.6.0.0
+    , Diff       ^>=0.4.0
