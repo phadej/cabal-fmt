@@ -22,6 +22,7 @@ main = defaultMain $ testGroup "tests"
     , goldenTest' "Cabal"
     , goldenTest' "Cabal-notab"
     , goldenTest' "simple-example"
+    , goldenTest' "tree-diff"
 
     , goldenTest' "fragment-missing"
     , goldenTest' "fragment-empty"
