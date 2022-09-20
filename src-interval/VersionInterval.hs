@@ -409,6 +409,16 @@ intervalToVersionRange2 (LB l) major = case major of
         -> Just (singleton (majorBoundVersion l))
 
     MB m
+        | [a,b]  <- versionNumbers m
+        , a' : _ <- versionNumbers l
+        , a' == a
+        , b >= 1
+        , majorUpperBound l <= m
+        -> Just $ go (majorBoundVersion l :|) (majorUpperBound l)
+      where
+        go acc v = if v >= m then acc [] else go (acc . (majorBoundVersion v :)) (majorUpperBound v)
+
+    MB m
         | [a,b] <- versionNumbers m
         , let m' = mkVersion [a,b-1]
         , b >= 1

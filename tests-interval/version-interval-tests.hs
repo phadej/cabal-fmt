@@ -14,7 +14,7 @@ import Distribution.Version            (transformCaretUpper)
 import Math.NumberTheory.Logarithms    (intLog2)
 import Test.QuickCheck                 (Arbitrary (..), (===))
 import Test.Tasty                      (TestTree, defaultMain, testGroup)
-import Test.Tasty.HUnit                (testCase, (@=?))
+import Test.Tasty.HUnit                (testCase, (@?=))
 import Test.Tasty.QuickCheck           (testProperty)
 
 import qualified Test.QuickCheck as QC
@@ -100,9 +100,10 @@ main = defaultMain $ testGroup "version-interval"
         [ normaliseExample ">=1 && <2"                               ">=1 && <2"
         , normaliseExample "^>=1"                                    "^>=1"
         , normaliseExample "^>=1 || ^>=2"                            "^>=1 || ^>=2"
-        , normaliseExample "^>=1.2 || ^>=1.3 || ^>=1.4"              ">=1.2 && <1.4 || ^>=1.4"
+        , normaliseExample "^>=1.2 || ^>=1.3 || ^>=1.4"              "^>=1.2 || ^>=1.3 || ^>=1.4"
         , normaliseExample "^>=1.2 || ^>=2.0"                        "^>=1.2 || ^>=2.0"
-        , normaliseExample ">=1.2 && <1.4 || ^>=1.4 || ^>=1.5"       ">=1.2 && <1.5 || ^>=1.5"
+        , normaliseExample ">=1.2 && <1.4 || ^>=1.4 || ^>=1.5"       "^>=1.2 || ^>=1.3 || ^>=1.4 || ^>=1.5"
+        , normaliseExample ">=1.2 && <2.4 || ^>=2.4 || ^>=2.5"       ">=1.2 && <2.5 || ^>=2.5"
         , normaliseExample "^>=1.2.0.0 || ^>=1.3.0.0 || ^>=1.4.0.0"  "^>=1.2.0.0 || ^>=1.3.0.0 || ^>=1.4.0.0"
 
         , normaliseExample "==3.1.4"           "==3.1.4"
@@ -119,7 +120,7 @@ main = defaultMain $ testGroup "version-interval"
         , normaliseExample ">0 && <0.0"    "<0"
 
         , normaliseExample "^>=1.5.0.1 || ^>=1.6.0.1 || >=1.9 && <1.13"
-                           "^>=1.5.0.1 || ^>=1.6.0.1 || >=1.9 && <1.12 || ^>=1.12"
+                           "^>=1.5.0.1 || ^>=1.6.0.1 || ^>=1.9 || ^>=1.10 || ^>=1.11 || ^>=1.12"
 
         , cannotNormaliseExample "^>=0 && >=0.1" IntervalsEmpty
 
@@ -138,13 +139,13 @@ normaliseExample input expected = testCase input $ do
     input'   <- either fail return $ eitherParsec input
     expected' <- either fail return $ eitherParsec expected
 
-    VersionInterval.normaliseVersionRange input' @=? Right expected'
+    VersionInterval.normaliseVersionRange input' @?= Right expected'
 
 cannotNormaliseExample :: String -> ConversionProblem -> TestTree
 cannotNormaliseExample input problem = testCase ("cannot " ++ input) $ do
     input'   <- either fail return $ eitherParsec input
 
-    VersionInterval.normaliseVersionRange input' @=? Left problem
+    VersionInterval.normaliseVersionRange input' @?= Left problem
 
 -------------------------------------------------------------------------------
 -- Intersect
