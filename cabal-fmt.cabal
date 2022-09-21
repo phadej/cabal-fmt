@@ -1,6 +1,6 @@
 cabal-version:      2.2
 name:               cabal-fmt
-version:            0.1.7
+version:            0.1.6
 synopsis:           Format .cabal files
 category:           Development
 description:

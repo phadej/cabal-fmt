@@ -1,12 +1,10 @@
-# 0.1.7
+# 0.1.6
 
 - Fix filepath issues on Windows
 - Add support for sublibraries
-- Use Cabal-syntax-3.8.1.0
-
-# 0.1.6
-
 - Format `build-tool-depends`
+- Use Cabal-syntax-3.8.1.0
+- Smarter version range normaliser
 
 # 0.1.5.1
 
