@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macOS-latest
+        cabal:
+          - "3.6.2.0"
+        ghc:
+          - "9.4.2"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Haskell
+        uses: haskell/actions/setup@v1.2
+        id: setup-haskell-cabal
+        with:
+          ghc-version: ${{ matrix.ghc }}
+          cabal-version: ${{ matrix.cabal }}
+
+      - name: Build
+        run: cabal install exe:cabal-fmt --install-method=copy --overwrite-policy=always --installdir=dist
+
+      - name: Test
+        run: ./dist/cabal-fmt --version
+
+      - name: Prepare archive
+        run: tar -zcvf ./${{ matrix.os }}.tar.gz -C dist cabal-fmt
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ./${{ matrix.os }}.tar.gz
