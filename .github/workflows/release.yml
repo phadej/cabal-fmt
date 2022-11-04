@@ -38,8 +38,8 @@ jobs:
       - name: Prepare archive
         run: tar -zcvf ./${{ matrix.os }}.tar.gz -C dist cabal-fmt
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
         with:
-          files: ./${{ matrix.os }}.tar.gz
+          name: ${{ matrix.os }}-binary
+          path: ${{ matrix.os }}.tar.gz
