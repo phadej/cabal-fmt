@@ -89,7 +89,6 @@ or in `use-package`:
   (revert-buffer nil t))
 
 (use-package haskell-cabal-mode
-  :straight nil
   :hook
   (before-save . my/haskell-cabal-format-and-save))
 ```
