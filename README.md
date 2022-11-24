@@ -70,10 +70,28 @@ If you have `cabal-fmt` in your `$PATH`, you can auto-format `.cabal` files in
 your project by putting this in the project directory's `.dir-locals.el`:
 
 ```elisp
+(defun my/haskell-cabal-format-and-save ()
+  "Format .cabal files with cabal-fmt."
+  (shell-command (format "cabal-fmt --inplace %s" (buffer-file-name)))
+  (revert-buffer nil t))
+
 ((haskell-cabal-mode
   (eval .
-    (add-hook 'before-save-hook
-      (lambda () (haskell-mode-buffer-apply-command "cabal-fmt")) nil t))))
+    (add-hook 'before-save-hook 'my/haskell-cabal-format-and-save nil t))))
+```
+
+or in `use-package`:
+
+```elisp
+(defun my/haskell-cabal-format-and-save ()
+  "Format .cabal files with cabal-fmt."
+  (shell-command (format "cabal-fmt --inplace %s" (buffer-file-name)))
+  (revert-buffer nil t))
+
+(use-package haskell-cabal-mode
+  :straight nil
+  :hook
+  (before-save . my/haskell-cabal-format-and-save))
 ```
 
 ### Vim
