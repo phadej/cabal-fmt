@@ -14,7 +14,7 @@ import qualified Data.ByteString     as BS
 import qualified Options.Applicative as O
 
 import CabalFmt         (cabalFmt)
-import CabalFmt.Error   (renderError)
+import CabalFmt.Error   (Error (SomeError), renderError)
 import CabalFmt.Monad   (runCabalFmtIO)
 import CabalFmt.Options
 import CabalFmt.Prelude
@@ -52,7 +52,13 @@ main' opts mfilepath input = do
     -- name of the input
     let filepath = fromMaybe "<stdin>" mfilepath
 
-    let root = maybe (optRoot opts) Just $ fmap takeDirectory mfilepath
+    root <- case (mfilepath, optRoot opts) of
+        (Just _, Just _) -> do
+            renderError $ SomeError "cannot pass both --root and FILE"
+            exitFailure
+        (Just f, Nothing) -> pure . Just $ takeDirectory f
+        (Nothing, Just d) -> pure $ Just d
+        (Nothing, Nothing) -> pure Nothing
 
     -- process
     res <- runCabalFmtIO root opts (cabalFmt filepath input)
