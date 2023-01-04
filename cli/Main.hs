@@ -52,8 +52,10 @@ main' opts mfilepath input = do
     -- name of the input
     let filepath = fromMaybe "<stdin>" mfilepath
 
+    let root = maybe (optRoot opts) Just $ fmap takeDirectory mfilepath
+
     -- process
-    res <- runCabalFmtIO (takeDirectory <$> mfilepath) opts (cabalFmt filepath input)
+    res <- runCabalFmtIO root opts (cabalFmt filepath input)
 
     case res of
         Right output -> do
@@ -93,6 +95,7 @@ optsP = (,)
         , stdoutP
         , inplaceP
         , checkP
+        , rootP
         ]
 
     werrorP = O.flag' (mkOptionsMorphism $ \opts -> opts { optError = True })
@@ -125,3 +128,5 @@ optsP = (,)
     checkP = O.flag' (mkOptionsMorphism $ \opts -> opts { optMode = ModeCheck })
         $ O.short 'c' <> O.long "check" <> O.help "Fail with non-zero exit code if input is not formatted"
 
+    rootP = O.option (fmap (\d -> mkOptionsMorphism $ \opts -> opts { optRoot = Just d }) O.str)
+        $ O.long "root" <> O.help "Sets the root directory when reading from STDIN" <> O.metavar "DIR"
