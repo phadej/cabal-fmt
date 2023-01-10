@@ -1,0 +1,45 @@
+cabal-version: 3.4
+name:          simple-pkg
+version:       0.1.0.0
+
+common warnings
+  ghc-options:
+    -Wall
+    -Wtabs
+    -Wincomplete-uni-patterns
+    -Werror=dodgy-imports
+    -Werror=missing-home-modules
+    -Werror=star-is-type
+    -Werror=unused-imports
+    -eventlog
+    -O0
+    +RTS
+    -A32M
+    -RTS
+
+library
+  import:           warnings
+  exposed-modules:  MyLib
+  build-depends:    base ^>=4.17.0.0
+  hs-source-dirs:   src
+  default-language: GHC2021
+
+executable simple-pkg
+  import:           warnings
+  main-is:          Main.hs
+  build-depends:
+    , base        ^>=4.17.0.0
+    , simple-pkg
+
+  hs-source-dirs:   app
+  default-language: GHC2021
+
+test-suite simple-pkg-test
+  import:           warnings
+  default-language: GHC2021
+  type:             exitcode-stdio-1.0
+  hs-source-dirs:   test
+  main-is:          Main.hs
+  build-depends:
+    , base        ^>=4.17.0.0
+    , simple-pkg

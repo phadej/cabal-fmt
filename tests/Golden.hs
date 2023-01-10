@@ -13,27 +13,31 @@ import qualified Data.Map              as Map
 
 import CabalFmt         (cabalFmt)
 import CabalFmt.Monad   (runCabalFmt)
-import CabalFmt.Options (defaultOptions)
+import CabalFmt.Options (Options(..), defaultOptions)
 import CabalFmt.Prelude
 
 main :: IO ()
 main = defaultMain $ testGroup "tests"
-    [ goldenTest' "cabal-fmt"
-    , goldenTest' "Cabal"
-    , goldenTest' "Cabal-notab"
-    , goldenTest' "simple-example"
-    , goldenTest' "tree-diff"
+    [ go "cabal-fmt"
+    , go "Cabal"
+    , go "Cabal-notab"
+    , go "simple-example"
+    , go "tree-diff"
+    , go "ghc-options-flow"
+    , goldenTest' (defaultOptions{optFlow = False}) "ghc-options-vert"
 
-    , goldenTest' "fragment-missing"
-    , goldenTest' "fragment-empty"
-    , goldenTest' "fragment-wrong-field"
-    , goldenTest' "fragment-wrong-type"
-    , goldenTest' "fragment-multiple"
-    , goldenTest' "fragment-section"
+    , go "fragment-missing"
+    , go "fragment-empty"
+    , go "fragment-wrong-field"
+    , go "fragment-wrong-type"
+    , go "fragment-multiple"
+    , go "fragment-section"
     ]
+    where
+        go = goldenTest' defaultOptions
 
-goldenTest' :: String -> TestTree
-goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
+goldenTest' :: Options -> String -> TestTree
+goldenTest' options n = goldenTest n readGolden makeTest cmp writeGolden
   where
     goldenPath = "fixtures" </> n -<.> "format"
     inputPath  = "fixtures" </> n -<.> "cabal"
@@ -43,11 +47,11 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
 
     makeTest = do
         contents <- BS.readFile inputPath
-        case runCabalFmt files defaultOptions $ cabalFmt inputPath contents of
+        case runCabalFmt files options $ cabalFmt inputPath contents of
             Left err            -> fail ("First pass: " ++ show err)
             Right (output', ws) -> do
                 -- idempotent
-                case runCabalFmt files defaultOptions $ cabalFmt inputPath (toUTF8BS output') of
+                case runCabalFmt files options $ cabalFmt inputPath (toUTF8BS output') of
                     Left err            -> fail ("Second pass: " ++ show err)
                     Right (output'', _) -> do
                         unless (output' == output'') $ fail "Output not idempotent"

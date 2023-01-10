@@ -12,8 +12,6 @@ import qualified Text.PrettyPrint           as PP
 import CabalFmt.Fields
 import CabalFmt.Prelude
 
-import Data.List (sort)
-
 ghcOptionsF :: FieldDescrs () ()
 ghcOptionsF = singletonF "ghc-options" pretty parse
 
@@ -21,4 +19,4 @@ parse :: C.CabalParsing m => m [String]
 parse = unpack' (C.alaList' C.NoCommaFSep C.Token') <$> C.parsec
 
 pretty :: [String] -> PP.Doc
-pretty = PP.vcat . map C.showToken . sort
+pretty = PP.vcat . map C.showToken

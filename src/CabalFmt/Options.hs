@@ -23,6 +23,7 @@ data Options = Options
     { optError       :: !Bool
     , optIndent      :: !Int
     , optTabular     :: !Bool
+    , optFlow        :: !Bool
     , optCabalFile   :: !Bool
     , optSpecVersion :: !C.CabalSpecVersion
     , optMode        :: !Mode
@@ -34,6 +35,7 @@ defaultOptions = Options
     { optError       = False
     , optIndent      = 2
     , optTabular     = True
+    , optFlow        = True
     , optCabalFile   = True
     , optSpecVersion = C.cabalSpecLatest
     , optMode        = ModeStdout

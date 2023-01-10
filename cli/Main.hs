@@ -88,6 +88,8 @@ optsP = (,)
         , indentP
         , tabularP
         , noTabularP
+        , ghcOptionsFlowP
+        , ghcOptionsVertP
         , cabalFileP
         , noCabalFileP
         , stdoutP
@@ -109,6 +111,12 @@ optsP = (,)
 
     noTabularP = O.flag' (mkOptionsMorphism $ \opts -> opts { optTabular = False })
         $ O.long "no-tabular"
+
+    ghcOptionsFlowP = O.flag' (mkOptionsMorphism $ \opts -> opts { optFlow = True })
+        $ O.long "ghc-options-flow" <> O.help "ghc-options: flow options (default)"
+
+    ghcOptionsVertP = O.flag' (mkOptionsMorphism $ \opts -> opts { optFlow = False })
+        $ O.long "ghc-options-vert" <> O.help "ghc-options: one option per line"
 
     cabalFileP = O.flag' (mkOptionsMorphism $ \opts -> opts { optCabalFile = True })
         $ O.long "cabal-file"
