@@ -66,6 +66,7 @@ library cabal-fmt-internal
     CabalFmt.Fields
     CabalFmt.Fields.BuildDepends
     CabalFmt.Fields.Extensions
+    CabalFmt.Fields.GhcOptions
     CabalFmt.Fields.Modules
     CabalFmt.Fields.SourceFiles
     CabalFmt.Fields.TestedWith
@@ -90,6 +91,15 @@ library cabal-fmt-internal
     OverloadedStrings
     RankNTypes
     ScopedTypeVariables
+
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-export-lists
+    -Wmissing-home-modules
+    -Wredundant-constraints
 
 executable cabal-fmt
   default-language: Haskell2010
