@@ -30,6 +30,8 @@ main = defaultMain $ testGroup "tests"
     , goldenTest' "fragment-wrong-type"
     , goldenTest' "fragment-multiple"
     , goldenTest' "fragment-section"
+
+    , goldenTest' "issue69"
     ]
 
 goldenTest' :: String -> TestTree
