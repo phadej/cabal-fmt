@@ -20,7 +20,7 @@ version: 0
 -- An example formatter
 executable cabal-fmt
     default-language: Haskell2010
-    hs-source-dirs: src 
+    hs-source-dirs: src
     main-is: CabalFmt.hs
     -- build depends will be in
     -- a nice tabular format
@@ -66,14 +66,17 @@ executable cabal-fmt
 
 ### Emacs
 
-If you have `cabal-fmt` in your `$PATH`, you can auto-format `.cabal` files in
-your project by putting this in the project directory's `.dir-locals.el`:
+If you have `cabal-fmt` in your `$PATH` (and you use
+[exec-path-from-shell](https://github.com/purcell/exec-path-from-shell)),
+you can auto-format `.cabal` files via
+[format-all](https://github.com/lassik/emacs-format-all-the-code):
 
-```elisp
-((haskell-cabal-mode
-  (eval .
-    (add-hook 'before-save-hook
-      (lambda () (haskell-mode-buffer-apply-command "cabal-fmt")) nil t))))
+``` elisp
+(use-package format-all)
+(use-package haskell-cabal
+  :hook
+  (haskell-cabal-mode . format-all-mode)
+  (format-all-mode . format-all-ensure-formatter))
 ```
 
 ### Vim
