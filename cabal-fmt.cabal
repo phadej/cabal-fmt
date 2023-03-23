@@ -120,7 +120,7 @@ test-suite golden
     , base
     , bytestring
     , cabal-fmt-internal
-    , Cabal-syntax        ^>=3.10.1.0
+    , Cabal-syntax
     , containers
 
   -- test dependencies
@@ -138,7 +138,7 @@ test-suite version-interval-tests
   main-is:          version-interval-tests.hs
   build-depends:
     , base
-    , Cabal-syntax        ^>=3.10.1.0
+    , Cabal-syntax
     , integer-logarithms  ^>=1.0.3.1
     , QuickCheck
     , tasty
