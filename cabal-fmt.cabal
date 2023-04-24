@@ -45,15 +45,16 @@ library cabal-fmt-internal
 
   -- GHC boot libraries
   build-depends:
-    , base          ^>=4.11.1.0 || ^>=4.12.0.0 || ^>=4.13.0.0 || ^>=4.14.0.0 || ^>=4.15.0.0 || ^>=4.16.0.0 || ^>=4.17.0.0
-    , bytestring    ^>=0.10.8.2 || ^>=0.11.3.1
-    , Cabal-syntax  ^>=3.8.1.0
-    , containers    ^>=0.5.11.0 || ^>=0.6.0.1
-    , directory     ^>=1.3.1.5
-    , filepath      ^>=1.4.2
-    , mtl           ^>=2.2.2
-    , parsec        ^>=3.1.13.0
-    , pretty        ^>=1.1.3.6
+    , base                  ^>=4.11.1.0 || ^>=4.12.0.0 || ^>=4.13.0.0 || ^>=4.14.0.0 || ^>=4.15.0.0 || ^>=4.16.0.0 || ^>=4.17.0.0
+    , bytestring            ^>=0.10.8.2 || ^>=0.11.3.1
+    , Cabal-syntax          ^>=3.8.1.0
+    , containers            ^>=0.5.11.0 || ^>=0.6.0.1
+    , directory             ^>=1.3.1.5
+    , filepath              ^>=1.4.2
+    , mtl                   ^>=2.2.2
+    , optparse-applicative  ^>=0.17.0.0
+    , parsec                ^>=3.1.13.0
+    , pretty                ^>=1.1.3.6
 
   -- our version interval normalisation
   build-depends:    version-interval
@@ -70,6 +71,7 @@ library cabal-fmt-internal
     CabalFmt.Fields.SourceFiles
     CabalFmt.Fields.TestedWith
     CabalFmt.Glob
+    CabalFmt.Main
     CabalFmt.Monad
     CabalFmt.Options
     CabalFmt.Parser
@@ -80,6 +82,9 @@ library cabal-fmt-internal
     CabalFmt.Refactoring.Fragments
     CabalFmt.Refactoring.GlobFiles
     CabalFmt.Refactoring.Type
+
+  other-modules:
+    Paths_cabal_fmt
 
   other-extensions:
     DeriveFunctor
@@ -101,10 +106,7 @@ executable cabal-fmt
   -- dependencies in library
   build-depends:
     , base
-    , bytestring
     , cabal-fmt-internal
-    , directory
-    , filepath
 
   -- extra dependencies
   build-depends:    optparse-applicative >=0.14.3.0 && <0.18
