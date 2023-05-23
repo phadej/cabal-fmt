@@ -1,3 +1,7 @@
+# 0.1.7
+
+- Use Cabal-syntax-3.10.1.0
+
 # 0.1.6
 
 - Fix filepath issues on Windows
