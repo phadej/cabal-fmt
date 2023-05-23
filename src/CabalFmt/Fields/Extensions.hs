@@ -5,7 +5,7 @@
 module CabalFmt.Fields.Extensions (
     otherExtensionsF,
     defaultExtensionsF,
-    ) where
+) where
 
 import qualified Distribution.FieldGrammar  as C
 import qualified Distribution.Parsec        as C
@@ -26,4 +26,4 @@ parse :: C.CabalParsing m => m [C.Extension]
 parse = unpack' (C.alaList' C.FSep C.MQuoted) <$> C.parsec
 
 pretty :: [C.Extension] -> PP.Doc
-pretty = PP.vcat . map C.pretty . sortOn show
+pretty = PP.vcat . map C.pretty . sortOn C.prettyShow

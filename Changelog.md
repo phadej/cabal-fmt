@@ -1,3 +1,7 @@
+# 0.1.8
+
+- Order extensions lexicographically
+
 # 0.1.7
 
 - Use Cabal-syntax-3.10.1.0
