@@ -26,6 +26,7 @@ data Options = Options
     , optCabalFile   :: !Bool
     , optSpecVersion :: !C.CabalSpecVersion
     , optMode        :: !Mode
+    , optStdinInputFile :: !(Maybe FilePath)
     }
   deriving Show
 
@@ -37,6 +38,7 @@ defaultOptions = Options
     , optCabalFile   = True
     , optSpecVersion = C.cabalSpecLatest
     , optMode        = ModeStdout
+    , optStdinInputFile = Nothing
     }
 
 newtype OptionsMorphism = OM (Options -> Options)

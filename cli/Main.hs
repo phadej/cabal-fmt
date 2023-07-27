@@ -14,7 +14,7 @@ import qualified Data.ByteString     as BS
 import qualified Options.Applicative as O
 
 import CabalFmt         (cabalFmt)
-import CabalFmt.Error   (renderError)
+import CabalFmt.Error   (Error (SomeError), renderError)
 import CabalFmt.Monad   (runCabalFmtIO)
 import CabalFmt.Options
 import CabalFmt.Prelude
@@ -52,8 +52,16 @@ main' opts mfilepath input = do
     -- name of the input
     let filepath = fromMaybe "<stdin>" mfilepath
 
+    mroot <- fmap takeDirectory <$> case (mfilepath, optStdinInputFile opts) of
+        (Just _, Just _) -> do
+            renderError $ SomeError "cannot pass both --stdin-input-file and FILE"
+            exitFailure
+        (Just f, Nothing) -> pure $ Just f
+        (Nothing, Just f) -> pure $ Just f
+        (Nothing, Nothing) -> pure Nothing
+
     -- process
-    res <- runCabalFmtIO (takeDirectory <$> mfilepath) opts (cabalFmt filepath input)
+    res <- runCabalFmtIO mroot opts (cabalFmt filepath input)
 
     case res of
         Right output -> do
@@ -93,6 +101,7 @@ optsP = (,)
         , stdoutP
         , inplaceP
         , checkP
+        , rootP
         ]
 
     werrorP = O.flag' (mkOptionsMorphism $ \opts -> opts { optError = True })
@@ -125,3 +134,5 @@ optsP = (,)
     checkP = O.flag' (mkOptionsMorphism $ \opts -> opts { optMode = ModeCheck })
         $ O.short 'c' <> O.long "check" <> O.help "Fail with non-zero exit code if input is not formatted"
 
+    rootP = O.option (fmap (\f -> mkOptionsMorphism $ \opts -> opts { optStdinInputFile = Just f }) O.str)
+        $ O.long "stdin-input-file" <> O.help "When reading from STDIN, use this file path to resolve relative references" <> O.metavar "FILE"
