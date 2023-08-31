@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
-        ghc: ['8.10']
+        ghc: ['9.2']
       fail-fast: false
     steps:
       - name: Set git to use LF
@@ -27,10 +27,10 @@ jobs:
 
       - name: Set up Haskell
         id: setup-haskell
-        uses: haskell/actions/setup@v1
+        uses: haskell/actions/setup@v2
         with:
           ghc-version: ${{ matrix.ghc }}
-          cabal-version: '3.6.2.0'
+          cabal-version: '3.10.1.0'
 
       - name: Cache
         uses: actions/cache@v2.1.3
