@@ -402,37 +402,38 @@ intervalToVersionRange1 (LB v) upper' = case upper' of
     makeUpperBound u = earlierVersion u
 
 intervalToVersionRange2 :: LB -> MB -> Maybe (NonEmpty VersionRange)
-intervalToVersionRange2 (LB l) major = case major of
-    NoMB -> Just (singleton lowerBound)
-    MB m
-        | majorUpperBound l == m
-        -> Just (singleton (majorBoundVersion l))
-
-{-
-    MB m
-        | [a,b]  <- versionNumbers m
-        , a' : _ <- versionNumbers l
-        , a' == a
-        , b >= 1
-        , majorUpperBound l <= m
-        -> Just $ go (majorBoundVersion l :|) (majorUpperBound l)
-      where
-        go acc v = if v >= m then acc [] else go (acc . (majorBoundVersion v :)) (majorUpperBound v)
--}
-
-    MB m
-        | [a,b] <- versionNumbers m
-        , let m' = mkVersion [a,b-1]
-        , b >= 1
-        , m' > l
-        -> Just $
-            (ubToVR (UB m') (lbToVR (LB l)))
-            :| [ majorBoundVersion (mkVersion [a, b-1]) ]
-
-    _ -> Nothing
+intervalToVersionRange2 (LB l) NoMB = Just (singleton lowerBound)
   where
     lowerBound :: VersionRange
     lowerBound = lbToVR (LB l)
+intervalToVersionRange2 (LB l) (MB m)
+    | supermajor l == supermajor m
+    = go (l :|) (majorUpperBound l)
+
+    | [a,b] <- versionNumbers m
+    , let m' = mkVersion [a,b-1]
+    , b >= 1
+    , m' > l
+    = Just $
+            (ubToVR (UB m') (lbToVR (LB l)))
+            :| [ majorBoundVersion (mkVersion [a, b-1]) ]
+
+    | otherwise
+    = Nothing
+
+  where
+    go :: ([Version] -> NonEmpty Version) -> Version -> Maybe (NonEmpty VersionRange)
+    go !acc v = case compare v m of
+        LT -> go (snoc acc v) (majorUpperBound v)
+        EQ -> Just (fmap majorBoundVersion (acc []))
+        GT -> Nothing
+
+    snoc xs x = xs . (x :)
+
+    supermajor :: Version -> Int
+    supermajor v = case versionNumbers v of
+        []  -> -1
+        s:_ -> s
 
 -------------------------------------------------------------------------------
 -- Normalisation

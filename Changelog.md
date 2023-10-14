@@ -1,3 +1,8 @@
+# 0.1.9
+
+- Change how version ranges with carets are formatted once again.
+  Now `^>=1.2 || ^>=1.3` won't be changed anymore.
+
 # 0.1.8
 
 - Order extensions lexicographically
