@@ -19,13 +19,13 @@ import CabalFmt.Refactoring.Type
 
 refactoringGlobFiles :: FieldRefactoring
 refactoringGlobFiles C.Section {} = pure Nothing
-refactoringGlobFiles (C.Field name@(C.Name (_, pragmas) _n) fls) = do
+refactoringGlobFiles (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
     globs <- parse pragmas
     files <- fmap concat (traverse match' globs)
 
     let newFiles :: [C.FieldLine CommentsPragmas]
         newFiles = catMaybes
-            [ return $ C.FieldLine mempty $ toUTF8BS file
+            [ return $ C.FieldLine emptyCommentsPragmas $ toUTF8BS file
             | file <- files
             ]
 

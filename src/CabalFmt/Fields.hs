@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveFunctor             #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE UndecidableInstances      #-}
@@ -15,7 +16,6 @@ module CabalFmt.Fields (
     ) where
 
 import qualified Data.Map.Strict                 as Map
-import qualified Distribution.Compat.CharParsing as C
 import qualified Distribution.FieldGrammar       as C
 import qualified Distribution.Fields.Field       as C
 import qualified Distribution.Parsec             as C
@@ -29,10 +29,11 @@ import CabalFmt.Prelude
 -------------------------------------------------------------------------------
 
 -- strict pair
-data SP = forall f. SP
-    { _pPretty :: !(f -> PP.Doc)
-    , _pParse  :: !(forall m. C.CabalParsing m => m f)
-    }
+data SP where
+    FreeText :: SP
+    SP :: !(f -> PP.Doc)
+       -> !(forall m. C.CabalParsing m => m f)
+       -> SP
 
 -- | Lookup both pretty-printer and value parser.
 --
@@ -42,10 +43,12 @@ fieldDescrLookup
     :: C.CabalParsing m
     => FieldDescrs s a
     -> C.FieldName
+    -> r -- field is freetext
     -> (forall f. m f -> (f -> PP.Doc) -> r)
     -> Maybe r
-fieldDescrLookup (F m) fn kont = kont' <$> Map.lookup fn m where
+fieldDescrLookup (F m) fn ft kont = kont' <$> Map.lookup fn m where
     kont' (SP a b) = kont b a
+    kont' FreeText = ft
 
 -- | A collection field parsers and pretty-printers.
 newtype FieldDescrs s a = F { runF :: Map.Map C.FieldName SP }
@@ -94,17 +97,9 @@ instance C.FieldGrammar PrettyParsec FieldDescrs where
     monoidalFieldAla fn _pack _ =
         singletonF fn (C.pretty . pack' _pack) (unpack' _pack <$> C.parsec)
 
-    freeTextField fn _ = singletonF fn
-        PP.text
-        (C.munch $ const True)
-
-    freeTextFieldDef fn _ = singletonF fn
-        PP.text
-        (C.munch $ const True)
-
-    freeTextFieldDefST fn _ = singletonF fn
-        PP.text
-        (C.munch $ const True)
+    freeTextField      fn _ = F $ Map.singleton fn FreeText
+    freeTextFieldDef   fn _ = F $ Map.singleton fn FreeText
+    freeTextFieldDefST fn _ = F $ Map.singleton fn FreeText
 
     prefixedFields _fnPfx _l = F mempty
     knownField _           = pure ()

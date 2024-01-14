@@ -1,3 +1,8 @@
+# 0.1.10
+
+- Fix removal of empty lines in free text fields (like `description`)
+  when using `cabal-version: 3.0` (where you can use empty lines)
+
 # 0.1.9
 
 - Change how version ranges with carets are formatted once again.

@@ -32,6 +32,7 @@ main = defaultMain $ testGroup "tests"
     , goldenTest' "fragment-section"
 
     , goldenTest' "issue69"
+    , goldenTest' "issue29"
     ]
 
 goldenTest' :: String -> TestTree
@@ -52,7 +53,13 @@ goldenTest' n = goldenTest n readGolden makeTest cmp writeGolden
                 case runCabalFmt files defaultOptions $ cabalFmt inputPath (toUTF8BS output') of
                     Left err            -> fail ("Second pass: " ++ show err)
                     Right (output'', _) -> do
-                        unless (output' == output'') $ fail "Output not idempotent"
+                        unless (output' == output'') $ do
+                            putStrLn "<<<<<<<"
+                            putStr output'
+                            putStrLn "======="
+                            putStr output''
+                            putStrLn ">>>>>>>"
+                            fail "Output not idempotent"
                         return (toUTF8BS $ unlines (map ("-- " ++) ws) ++ output')
 
     cmp a b | a == b    = return Nothing

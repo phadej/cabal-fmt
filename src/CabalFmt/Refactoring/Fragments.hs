@@ -12,6 +12,7 @@ import Text.PrettyPrint (hsep, render)
 import qualified Distribution.Fields        as C
 import qualified Distribution.Fields.Field  as C
 import qualified Distribution.Fields.Pretty as C
+import qualified Distribution.Parsec        as C
 
 import CabalFmt.Comments
 import CabalFmt.Monad
@@ -70,10 +71,10 @@ refactoringFragments field = do
                             pure Nothing
   where
     noCommentsPragmas :: Functor f => [f ann] -> [f CommentsPragmas]
-    noCommentsPragmas = map ((Comments [], []) <$)
+    noCommentsPragmas = map ((C.zeroPos, Comments [], []) <$)
 
     getPragmas :: C.Field CommentsPragmas -> [FieldPragma]
-    getPragmas = snd . C.fieldAnn
+    getPragmas = trdOf3 . C.fieldAnn
 
     showSection :: C.Name ann -> [C.SectionArg ann] -> String
     showSection (C.Name _ n) []   = show n
