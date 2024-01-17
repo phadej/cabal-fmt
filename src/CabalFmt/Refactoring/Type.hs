@@ -6,10 +6,12 @@
 module CabalFmt.Refactoring.Type (
     FieldRefactoring,
     CommentsPragmas,
+    emptyCommentsPragmas,
     rewriteFields,
     ) where
 
-import qualified Distribution.Fields       as C
+import qualified Distribution.Fields as C
+import qualified Distribution.Parsec as C
 
 import CabalFmt.Comments
 import CabalFmt.Monad
@@ -19,7 +21,10 @@ import CabalFmt.Pragma
 -- Refactoring type
 -------------------------------------------------------------------------------
 
-type CommentsPragmas = (Comments, [FieldPragma])
+type CommentsPragmas = (C.Position, Comments, [FieldPragma])
+
+emptyCommentsPragmas :: CommentsPragmas
+emptyCommentsPragmas = (C.zeroPos, mempty, mempty)
 
 type FieldRefactoring
     = forall r m. MonadCabalFmt r m

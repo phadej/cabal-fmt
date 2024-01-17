@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- |
 -- License: GPL-3.0-or-later
 -- Copyright: Oleg Grenrus
@@ -42,6 +43,10 @@ module CabalFmt.Prelude (
     traverseOf,
     over, view,
     _1,
+    -- ** Tuples
+    fstOf3,
+    sndOf3,
+    trdOf3,
     ) where
 
 import Control.Arrow               ((&&&))
@@ -62,6 +67,10 @@ import System.FilePath             (dropExtension, splitDirectories)
 
 import qualified Distribution.Utils.Generic as C
 
+#ifdef MIN_VERSION_base_orphans
+import Data.Orphans ()
+#endif
+
 traverseOf
     :: Applicative f
     => ((a -> f b) -> s ->  f t)
@@ -70,3 +79,12 @@ traverseOf = id
 
 _1 :: Functor f => (a -> f b) -> (a, c) -> f (b, c)
 _1 f (a, c) = (\b -> (b, c)) <$> f a
+
+fstOf3 :: (a,b,c) -> a
+fstOf3 (a,_,_) = a
+
+sndOf3 :: (a,b,c) -> b
+sndOf3 (_,b,_) = b
+
+trdOf3 :: (a,b,c) -> c
+trdOf3 (_,_,c) = c

@@ -44,9 +44,9 @@ nullComments (Comments cs) = null cs
 attachComments
     :: BS.ByteString        -- ^ source with comments
     -> [C.Field C.Position] -- ^ parsed source fields
-    -> ([C.Field Comments], Comments)
+    -> ([C.Field (C.Position, Comments)], Comments)
 attachComments input inputFields =
-    (overAnn attach inputFields, endComments)
+    (overAnn attach attach' inputFields, endComments)
   where
     inputFieldsU :: [(FieldPath, C.Field C.Position)]
     inputFieldsU = fieldUniverseN inputFields
@@ -68,27 +68,30 @@ attachComments input inputFields =
         , isNothing (findPath C.fieldAnn l inputFieldsU)
         ]
 
-    attach :: FieldPath -> C.Position -> Comments
-    attach fp _pos = fromMaybe mempty (Map.lookup fp comments')
+    attach :: FieldPath -> C.Position -> (C.Position, Comments)
+    attach fp pos = (pos, fromMaybe mempty (Map.lookup fp comments'))
 
-overAnn :: forall a b. (FieldPath -> a -> b) -> [C.Field a] -> [C.Field b]
-overAnn f = go' id where
+    attach' :: C.Position -> (C.Position, Comments)
+    attach' pos = (pos, mempty)
+
+overAnn :: forall a b. (FieldPath -> a -> b) -> (a -> b) -> [C.Field a] -> [C.Field b]
+overAnn f h = go' id where
     go :: (FieldPath -> FieldPath) -> Int -> C.Field a -> C.Field b
     go g i (C.Field (C.Name a name) fls) =
-        C.Field (C.Name b name) (b <$$ fls)
+        C.Field (C.Name b name) (h <$$> fls)
       where
         b = f (g (Nth i End)) a
 
     go g i (C.Section (C.Name a name) args fls) =
-        C.Section (C.Name b name) (b <$$ args) (go' (g . Nth i) fls)
+        C.Section (C.Name b name) (h <$$> args) (go' (g . Nth i) fls)
       where
         b = f (g (Nth i End)) a
 
     go' :: (FieldPath -> FieldPath) -> [C.Field a] -> [C.Field b]
     go' g xs = zipWith (go g) [0..] xs
 
-    (<$$) :: (Functor f, Functor g) => x -> f (g y) -> f (g x)
-    x <$$ y = (x <$) <$> y
+    (<$$>) :: (Functor f, Functor g) => (x -> y) -> f (g x) -> f (g y)
+    x <$$> y = (x <$>) <$> y
 
 -------------------------------------------------------------------------------
 -- Find comments in the input

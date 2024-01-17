@@ -33,6 +33,7 @@ import CabalFmt.Comments
 import CabalFmt.Fields
 import CabalFmt.Fields.BuildDepends
 import CabalFmt.Fields.Extensions
+import CabalFmt.FreeText
 import CabalFmt.Fields.Modules
 import CabalFmt.Fields.SourceFiles
 import CabalFmt.Fields.TestedWith
@@ -49,11 +50,20 @@ import CabalFmt.Refactoring
 
 cabalFmt :: MonadCabalFmt r m => FilePath -> BS.ByteString -> m String
 cabalFmt filepath contents = do
+    -- determine cabal-version
+    cabalFile <- asks (optCabalFile . view options)
+    csv <- case cabalFile of
+        False -> return C.cabalSpecLatest
+        True  -> do
+            gpd <- parseGpd filepath contents
+            return $ C.specVersion
+              $ C.packageDescription gpd
+
     inputFields' <- parseFields contents
     let (inputFieldsC, endComments) = attachComments contents inputFields'
 
     -- parse pragmas
-    let parse c = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws *> return (c, ps)
+    let parse (pos, c) = case parsePragmas c of (ws, ps) -> traverse_ displayWarning ws *> return (pos, c, ps)
     inputFieldsP' <- traverse (traverse parse) inputFieldsC
     endCommentsPragmas <- case parsePragmas endComments of
         (ws, ps) -> traverse_ displayWarning ws *> return ps
@@ -67,29 +77,21 @@ cabalFmt filepath contents = do
     -- options morphisms
     let pragmas :: [GlobalPragma]
         pragmas = fst $ partitionPragmas $
-            foldMap (foldMap snd) inputFieldsP' <> endCommentsPragmas
+            foldMap (foldMap trdOf3) inputFieldsP' <> endCommentsPragmas
 
         optsEndo :: OptionsMorphism
         optsEndo = foldMap pragmaToOM pragmas
 
-    cabalFile <- asks (optCabalFile . view options)
-    csv <- case cabalFile of
-        False -> return C.cabalSpecLatest
-        True  -> do
-            gpd <- parseGpd filepath contents
-            return $ C.specVersion
-              $ C.packageDescription gpd
-
     local (over options $ \o -> runOptionsMorphism optsEndo $ o { optSpecVersion = csv }) $ do
         indentWith <- asks (optIndent . view options)
-        let inputFields = fmap (fmap fst) inputFieldsR
+        let inputFields = inputFieldsR
 
-        outputPrettyFields <- C.genericFromParsecFields
-            prettyFieldLines
+        outputPrettyFields <- genericFromParsecFields
+            (\n ann -> prettyFieldLines n (fstOf3 ann))
             prettySectionArgs
             inputFields
 
-        return $ C.showFields' fromComments (const id) indentWith outputPrettyFields
+        return $ C.showFields' (fromComments . sndOf3) (const id) indentWith outputPrettyFields
             & if nullComments endComments then id else
                 (++ unlines ("" : [ C.fromUTF8BS c | c <- unComments endComments ]))
 
@@ -97,19 +99,34 @@ fromComments :: Comments -> C.CommentPosition
 fromComments (Comments [])  = C.NoComment
 fromComments (Comments bss) = C.CommentBefore (map C.fromUTF8BS bss)
 
+genericFromParsecFields
+    :: Applicative f
+    => (C.FieldName -> ann -> [C.FieldLine ann] -> f PP.Doc)     -- ^ transform field contents
+    -> (C.FieldName -> [C.SectionArg ann] -> f [PP.Doc])  -- ^ transform section arguments
+    -> [C.Field ann]
+    -> f [C.PrettyField ann]
+genericFromParsecFields f g = goMany where
+    goMany = traverse go
+
+    go (C.Field (C.Name ann name) fls)          = C.PrettyField ann name <$> f name ann fls
+    go (C.Section (C.Name ann name) secargs fs) = C.PrettySection ann name <$> g name secargs <*> goMany fs
+
 -------------------------------------------------------------------------------
 -- Field prettyfying
 -------------------------------------------------------------------------------
 
-prettyFieldLines :: MonadCabalFmt r m => C.FieldName -> [C.FieldLine ann] -> m PP.Doc
-prettyFieldLines fn fls =
-    fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn fls
+prettyFieldLines :: MonadCabalFmt r m => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m PP.Doc
+prettyFieldLines fn pos fls =
+    fromMaybe (C.prettyFieldLines fn fls) <$> knownField fn pos fls
 
-knownField :: MonadCabalFmt r m => C.FieldName -> [C.FieldLine ann] -> m (Maybe PP.Doc)
-knownField fn fls = do
+knownField :: MonadCabalFmt r m => C.FieldName -> C.Position -> [C.FieldLine CommentsPragmas] -> m (Maybe PP.Doc)
+knownField fn pos fls = do
     opts <- asks (view options)
-    let v = optSpecVersion opts
-    return $ join $ fieldDescrLookup (fieldDescrs opts) fn $ \p pp ->
+    let v   = optSpecVersion opts
+    let ft  = fieldlinesToFreeText v pos (fmap (fmap fstOf3) fls)
+    let ft' = showFreeText v ft
+
+    return $ join $ fieldDescrLookup (fieldDescrs opts) fn (Just ft') $ \p pp ->
         case C.runParsecParser' v p "<input>" (C.fieldLinesToStream fls) of
             Right x -> Just (pp x)
             Left _  -> Nothing

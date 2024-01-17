@@ -18,13 +18,13 @@ import CabalFmt.Refactoring.Type
 
 refactoringExpandExposedModules :: FieldRefactoring
 refactoringExpandExposedModules C.Section {} = pure Nothing
-refactoringExpandExposedModules (C.Field name@(C.Name (_, pragmas) _n) fls) = do
+refactoringExpandExposedModules (C.Field name@(C.Name (_, _, pragmas) _n) fls) = do
     dirs <- parse pragmas
     files <- traverseOf (traverse . _1) getFiles dirs
 
     let newModules :: [C.FieldLine CommentsPragmas]
         newModules = catMaybes
-            [ return $ C.FieldLine mempty $ toUTF8BS $ intercalate "." parts
+            [ return $ C.FieldLine emptyCommentsPragmas $ toUTF8BS $ intercalate "." parts
             | (files', mns) <- files
             , file <- files'
             , let parts = splitDirectories $ dropExtension file
