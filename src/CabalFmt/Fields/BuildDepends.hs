@@ -11,20 +11,22 @@ module CabalFmt.Fields.BuildDepends (
 
 import Data.List (dropWhileEnd)
 
+import           CabalFmt.Fields
+import           CabalFmt.Options
+import           CabalFmt.Prelude
 import qualified Distribution.CabalSpecVersion    as C
+import qualified Distribution.Compat.NonEmptySet  as NES
 import qualified Distribution.FieldGrammar        as C
 import qualified Distribution.Parsec              as C
 import qualified Distribution.Pretty              as C
 import qualified Distribution.Types.Dependency    as C
 import qualified Distribution.Types.DependencyMap as C
 import qualified Distribution.Types.ExeDependency as C
+import qualified Distribution.Types.LibraryName   as C
 import qualified Distribution.Types.VersionRange  as C
 import qualified Text.PrettyPrint                 as PP
-
-import CabalFmt.Fields
-import CabalFmt.Options
-import CabalFmt.Prelude
-import VersionInterval  (normaliseVersionRange, ConversionProblem (..))
+import           VersionInterval
+                 (ConversionProblem (..), normaliseVersionRange)
 
 setupDependsF :: Options -> FieldDescrs () ()
 setupDependsF opts = singletonF "setup-depends" (pretty opts) parse
@@ -48,7 +50,7 @@ normaliseVersionRange' vr = either fromConversionProblem id (normaliseVersionRan
     fromConversionProblem OtherConversionProblem = vr
 
 pretty :: Options -> [C.Dependency] -> PP.Doc
-pretty opts deps = case deps of
+pretty opts deps = case deps' of
     []    -> PP.empty
     [dep] -> PP.text (prettyDepNoVersion dep) PP.<+> prettyVR vr'
       where
@@ -58,18 +60,33 @@ pretty opts deps = case deps of
                     | vr == C.noVersion  = PP.text "<0"
                     | otherwise          = C.pretty vr
 
-    _ -> prettyMany opts deps'
+    _ -> prettyMany opts deps''
       where
-        deps' :: [(String, C.VersionRange)]
-        deps' = sortOn (map toLower . fst)
-              $ map (prettyDepNoVersion &&& C.depVerRange)
-              $ C.fromDepMap . C.toDepMap -- this combines duplicate packages
-              $ deps
+        deps'' :: [(String, C.VersionRange)]
+        deps'' =
+            sortOn (map toLower . fst) $
+            map (prettyDepNoVersion &&& C.depVerRange) deps'
     where
+      -- combined and expanded dependencies
+      deps' :: [C.Dependency]
+      deps' = concatMap expandDep $ C.fromDepMap $ C.toDepMap deps
+
       prettyDepNoVersion :: C.Dependency -> String
       prettyDepNoVersion (C.Dependency pkg _ libs) =
         C.prettyShow (C.Dependency pkg C.anyVersion libs)
 
+      expandDep :: C.Dependency -> [C.Dependency]
+      expandDep (C.Dependency pkg vr libs) = makeDep $ sortOn f (NES.toList libs)
+        where
+          f C.LMainLibName    = Nothing
+          f (C.LSubLibName n) = Just (map toLower (C.prettyShow n))
+
+          -- attach version range to the first dependency of the group.
+          makeDep :: [C.LibraryName] -> [C.Dependency]
+          makeDep []         = []
+          makeDep (ln : lns) =
+              C.Dependency pkg vr (NES.singleton ln) :
+              map (\ln' -> C.Dependency pkg C.anyVersion (NES.singleton ln')) lns
 
 prettyExe :: Options -> [C.ExeDependency] -> PP.Doc
 prettyExe opts deps = case deps of

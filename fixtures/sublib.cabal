@@ -1,0 +1,23 @@
+cabal-version:      3.0
+name:               sublib
+version:            0
+
+library
+  default-language: Haskell2010
+  hs-source-dirs:   src
+
+  -- the anotherlib case tests case insensitivity.
+  build-depends:
+      base        >=4.3   && <4.18
+    , megalib
+    , megalib:sublib-a >=0.1
+    , megalib:sublib-b <0.3
+    , megalib:sublib-c <0.2
+
+    , anotherlib:sublib-B <0.3
+    , anotherlib:sublib-a >=0.1
+    , anotherlib:sublib-C <0.2
+
+  exposed-modules:
+    Data.ExampleA
+    Data.ExampleB

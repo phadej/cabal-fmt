@@ -33,6 +33,9 @@ main = defaultMain $ testGroup "tests"
 
     , goldenTest' "issue69"
     , goldenTest' "issue29"
+
+    , goldenTest' "sublib"
+    , goldenTest' "with-sublibs"
     ]
 
 goldenTest' :: String -> TestTree

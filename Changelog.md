@@ -1,3 +1,26 @@
+# 0.1.11
+
+- Change how dependencies on (multiple) sublibraries are output:
+  Always print each sublibrary on individual line,
+  with the first one having the version range.
+
+  ```cabal
+  build-depends:
+    ...
+    , megalib              >=0.1 && <0.2
+    , megalib:sublib-a
+    , megalib:sublib-b
+    , megalib:sublib-c
+  ```
+
+  instead of previous
+
+  ```
+  build-depends:
+    ...
+    , megalib:{megalib, sublib-a, sublib-b, sublib-c} >=0.1 && <0.2
+  ```
+
 # 0.1.10
 
 - Fix removal of empty lines in free text fields (like `description`)
