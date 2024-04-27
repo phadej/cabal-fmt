@@ -1,3 +1,7 @@
+# 0.1.12
+
+- Use Cabal-syntax-3.12.0.0
+
 # 0.1.11
 
 - Change how dependencies on (multiple) sublibraries are output:
