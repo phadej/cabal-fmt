@@ -1,3 +1,8 @@
+# 0.1.13
+
+- Use Cabal-syntax-3.14.1.0
+- Drop GHC-8.4 and GHC-8.6 support
+
 # 0.1.12
 
 - Use Cabal-syntax-3.12.0.0
